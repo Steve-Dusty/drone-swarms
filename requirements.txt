@@ -1,0 +1,4 @@
+flask
+google-genai
+fal-client
+python-dotenv

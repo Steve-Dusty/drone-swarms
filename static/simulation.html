@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Swarm Simulation</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { overflow: hidden; background: #000; }
+        canvas { display: block; }
+        #hud {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            z-index: 10;
+            pointer-events: none;
+        }
+        #hud h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        #hud p {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+        #loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #08080f;
+            color: #e4e4e7;
+            font-family: system-ui;
+            font-size: 1rem;
+            z-index: 100;
+            transition: opacity 0.6s;
+        }
+        #loading.done { opacity: 0; pointer-events: none; }
+    </style>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="loading">Loading drone model...</div>
+    <div id="hud">
+        <h2>Drone Swarm</h2>
+        <p>10 drones &middot; drag to orbit &middot; scroll to zoom</p>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // ── Scene ──
+        const scene = new THREE.Scene();
+        const skyColor = 0x7ec8e3;
+        scene.background = new THREE.Color(skyColor);
+        scene.fog = new THREE.FogExp2(skyColor, 0.0018);
+
+        // ── Camera ──
+        const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.5, 2000);
+        camera.position.set(120, 80, 160);
+
+        // ── Renderer ──
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.3;
+        document.body.appendChild(renderer.domElement);
+
+        // ── Controls ──
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.maxPolarAngle = Math.PI / 2.05;
+        controls.minDistance = 20;
+        controls.maxDistance = 400;
+        controls.target.set(0, 25, 0);
+        controls.update();
+
+        // ── Lighting ──
+        const hemi = new THREE.HemisphereLight(0x87ceeb, 0x3a5f0b, 1.2);
+        scene.add(hemi);
+
+        const sun = new THREE.DirectionalLight(0xfff5e6, 3);
+        sun.position.set(150, 200, 100);
+        sun.castShadow = true;
+        sun.shadow.camera.top = 200;
+        sun.shadow.camera.bottom = -200;
+        sun.shadow.camera.left = -200;
+        sun.shadow.camera.right = 200;
+        sun.shadow.mapSize.set(2048, 2048);
+        sun.shadow.bias = -0.0005;
+        scene.add(sun);
+
+        const ambient = new THREE.AmbientLight(0x404060, 0.4);
+        scene.add(ambient);
+
+        // ── Terrain noise ──
+        function terrainHeight(x, z) {
+            let h = 0;
+            h += Math.sin(x * 0.015 + 0.5) * Math.cos(z * 0.015 + 0.8) * 35;
+            h += Math.sin(x * 0.035 + 1.3) * Math.cos(z * 0.028 + 2.1) * 18;
+            h += Math.sin(x * 0.07 + 4.7) * Math.cos(z * 0.06 + 3.2) * 9;
+            h += Math.sin(x * 0.15) * Math.cos(z * 0.12) * 4;
+            h += Math.sin(x * 0.3 + 2.0) * Math.cos(z * 0.25 + 1.0) * 2;
+            return h;
+        }
+
+        // ── Build terrain mesh ──
+        const SIZE = 600;
+        const SEGS = 256;
+        const terrainGeo = new THREE.PlaneGeometry(SIZE, SIZE, SEGS, SEGS);
+        terrainGeo.rotateX(-Math.PI / 2);
+
+        const pos = terrainGeo.attributes.position.array;
+        const colors = new Float32Array(pos.length);
+
+        for (let i = 0; i < pos.length; i += 3) {
+            const x = pos[i], z = pos[i + 2];
+            const h = terrainHeight(x, z);
+            pos[i + 1] = h;
+
+            // Height-based vertex color
+            const t = Math.max(0, Math.min(1, (h + 35) / 70));
+
+            let r, g, b;
+            if (t < 0.25) {
+                // Dark green valley
+                r = 0.12; g = 0.28 + t * 1.2; b = 0.08;
+            } else if (t < 0.5) {
+                // Forest green
+                const s = (t - 0.25) / 0.25;
+                r = 0.15 + s * 0.2; g = 0.55 - s * 0.1; b = 0.08 + s * 0.04;
+            } else if (t < 0.7) {
+                // Brown rock
+                const s = (t - 0.5) / 0.2;
+                r = 0.35 + s * 0.15; g = 0.30 + s * 0.05; b = 0.15 + s * 0.1;
+            } else if (t < 0.85) {
+                // Gray rock
+                const s = (t - 0.7) / 0.15;
+                const gray = 0.45 + s * 0.2;
+                r = gray; g = gray; b = gray + 0.02;
+            } else {
+                // Snow cap
+                const s = (t - 0.85) / 0.15;
+                const snow = 0.7 + s * 0.25;
+                r = snow; g = snow; b = snow + 0.03;
+            }
+
+            colors[i] = r;
+            colors[i + 1] = g;
+            colors[i + 2] = b;
+        }
+
+        terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        terrainGeo.computeVertexNormals();
+
+        const terrainMat = new THREE.MeshStandardMaterial({
+            vertexColors: true,
+            roughness: 0.85,
+            metalness: 0.0,
+        });
+        const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+        terrain.receiveShadow = true;
+        scene.add(terrain);
+
+        // ── Water plane ──
+        const waterGeo = new THREE.PlaneGeometry(SIZE, SIZE);
+        waterGeo.rotateX(-Math.PI / 2);
+        const waterMat = new THREE.MeshStandardMaterial({
+            color: 0x1a6e8a,
+            transparent: true,
+            opacity: 0.55,
+            roughness: 0.1,
+            metalness: 0.6,
+        });
+        const water = new THREE.Mesh(waterGeo, waterMat);
+        water.position.y = -8;
+        water.receiveShadow = true;
+        scene.add(water);
+
+        // ── Load drones ──
+        const drones = [];
+        const DRONE_COUNT = 10;
+
+        const loader = new GLTFLoader();
+        loader.load('/static/drone.glb', (gltf) => {
+            const original = gltf.scene;
+
+            // Normalize model size
+            const box = new THREE.Box3().setFromObject(original);
+            const dim = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(dim.x, dim.y, dim.z);
+            const baseScale = 4 / maxDim;
+
+            for (let i = 0; i < DRONE_COUNT; i++) {
+                const drone = original.clone();
+                drone.scale.setScalar(baseScale);
+
+                drone.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                // Unique flight path parameters
+                const angle = (i / DRONE_COUNT) * Math.PI * 2;
+                drone.userData.flight = {
+                    radius: 50 + Math.random() * 80,
+                    radiusY: 0.5 + Math.random() * 0.5, // ellipse ratio
+                    speed: 0.25 + Math.random() * 0.35,
+                    altitude: 35 + Math.random() * 35,
+                    phase: angle,
+                    cx: (Math.random() - 0.5) * 100,
+                    cz: (Math.random() - 0.5) * 100,
+                    wobbleAmp: 1 + Math.random() * 2,
+                    wobbleFreq: 2 + Math.random() * 2,
+                    bankStrength: 0.25 + Math.random() * 0.2,
+                    pattern: i % 3, // 0: circle, 1: ellipse, 2: figure-8
+                };
+
+                scene.add(drone);
+                drones.push(drone);
+            }
+
+            // Hide loading screen
+            document.getElementById('loading').classList.add('done');
+        }, undefined, (err) => {
+            console.error('Failed to load drone:', err);
+            document.getElementById('loading').textContent = 'Failed to load drone model.';
+        });
+
+        // ── Path helpers ──
+        function getPathXZ(pattern, t, radius, radiusY) {
+            switch (pattern) {
+                case 1: // ellipse
+                    return [Math.cos(t) * radius, Math.sin(t) * radius * radiusY];
+                case 2: // figure-8
+                    return [Math.sin(t) * radius, Math.sin(t * 2) * radius * 0.4];
+                default: // circle
+                    return [Math.cos(t) * radius, Math.sin(t) * radius];
+            }
+        }
+
+        // ── Animate ──
+        const clock = new THREE.Clock();
+
+        function animate() {
+            const elapsed = clock.getElapsedTime();
+
+            for (let i = 0; i < drones.length; i++) {
+                const drone = drones[i];
+                const f = drone.userData.flight;
+                const t = elapsed * f.speed + f.phase;
+
+                // Current position
+                const [lx, lz] = getPathXZ(f.pattern, t, f.radius, f.radiusY);
+                const wx = f.cx + lx;
+                const wz = f.cz + lz;
+                const th = terrainHeight(wx, wz);
+                const wobble = Math.sin(elapsed * f.wobbleFreq + i * 1.7) * f.wobbleAmp;
+                const wy = Math.max(th + f.altitude, f.altitude * 0.6) + wobble;
+
+                drone.position.set(wx, wy, wz);
+
+                // Next position for heading
+                const nt = t + 0.015;
+                const [nlx, nlz] = getPathXZ(f.pattern, nt, f.radius, f.radiusY);
+                const nwx = f.cx + nlx;
+                const nwz = f.cz + nlz;
+
+                // Heading
+                const dx = nwx - wx;
+                const dz = nwz - wz;
+                drone.rotation.set(0, 0, 0);
+                drone.rotation.y = Math.atan2(dx, dz);
+
+                // Bank into turns
+                const cross = Math.sin(t) * f.speed;
+                drone.rotation.z = -cross * f.bankStrength;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        renderer.setAnimationLoop(animate);
+
+        // ── Resize ──
+        window.addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+    </script>
+</body>
+</html>
