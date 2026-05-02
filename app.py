@@ -11,7 +11,10 @@ load_dotenv()
 
 app = Flask(__name__, static_folder="static")
 
-google_client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+# Initialize google_client only if API key is available
+google_client = None
+if "GOOGLE_API_KEY" in os.environ:
+    google_client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
 
 
 @app.route("/")
@@ -21,6 +24,9 @@ def index():
 
 @app.route("/api/generate-image", methods=["POST"])
 def generate_image():
+    if not google_client:
+        return jsonify({"error": "Google API key not configured"}), 503
+
     data = request.json
     prompt = data.get("prompt", "")
 
