@@ -323,34 +323,59 @@
             text-transform: uppercase;
         }
 
-        .node-template-status.ready {
+        .node-template-status.pending {
+            background: rgba(150,150,150,0.2);
+            color: #999;
+        }
+
+        .node-template-status.approval {
+            background: rgba(255,170,0,0.3);
+            color: #ffaa00;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        .node-template-status.executing {
+            background: rgba(68,144,255,0.3);
+            color: #4490ff;
+        }
+
+        .node-template-status.complete {
             background: rgba(68,255,144,0.2);
             color: #44ff90;
         }
 
-        .node-template-status.caution {
-            background: rgba(255,170,0,0.2);
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .approve-btn {
+            background: rgba(255,170,0,0.3);
+            border: 1px solid rgba(255,170,0,0.6);
             color: #ffaa00;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            width: 100%;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .node-template-status.feeds {
-            background: rgba(68,144,255,0.2);
-            color: #4490ff;
+        .approve-btn:hover {
+            background: rgba(255,170,0,0.5);
+            border-color: rgba(255,170,0,0.8);
+            transform: translateY(-1px);
         }
 
-        .node-template-status.units {
-            background: rgba(170,68,255,0.2);
-            color: #aa44ff;
-        }
-
-        .node-template-status.zones {
-            background: rgba(255,100,100,0.2);
-            color: #ff6464;
-        }
-
-        .node-template-status.report {
-            background: rgba(100,200,255,0.2);
-            color: #64c8ff;
+        .approve-btn.approved {
+            background: rgba(68,255,144,0.2);
+            border-color: rgba(68,255,144,0.6);
+            color: #44ff90;
+            cursor: default;
         }
 
         .node-template-title {
@@ -840,67 +865,55 @@
             <div class="flowchart-container">
                 <div class="node-palette">
                     <div class="palette-section">
-                        <div class="palette-title">Input Nodes</div>
+                        <div class="palette-title">Kill Chain Stages</div>
                         <div class="node-template" data-node-type="mission-trigger">
                             <div class="node-template-header">
-                                <span class="node-template-status ready">READY</span>
+                                <span class="node-template-status pending">PENDING</span>
                             </div>
                             <div class="node-template-title">Mission Trigger</div>
-                            <div class="node-template-desc">Launches the simulated search/survey sequence for the local room.</div>
+                            <div class="node-template-desc">Operator confirms target coordinates and rules of engagement.</div>
                         </div>
-                        <div class="node-template" data-node-type="camera-intake">
+                        <div class="node-template" data-node-type="isr-phase">
                             <div class="node-template-header">
-                                <span class="node-template-status feeds">3 FEEDS</span>
+                                <span class="node-template-status pending">PENDING</span>
                             </div>
-                            <div class="node-template-title">Camera Intake</div>
-                            <div class="node-template-desc">Tracks the three phone feeds as visual context only. No CV analysis is performed.</div>
+                            <div class="node-template-title">ISR Phase</div>
+                            <div class="node-template-desc">2 scout drones survey AO, build terrain picture, identify threats.</div>
                         </div>
-                    </div>
-
-                    <div class="palette-section">
-                        <div class="palette-title">Tasking Nodes</div>
                         <div class="node-template" data-node-type="swarm-assignment">
                             <div class="node-template-header">
-                                <span class="node-template-status units">4 UNITS</span>
+                                <span class="node-template-status pending">PENDING</span>
                             </div>
                             <div class="node-template-title">Swarm Assignment</div>
-                            <div class="node-template-desc">Assigns simulated drones to sectors based on battery, spacing, and line of sight.</div>
+                            <div class="node-template-desc">8 attack drones assigned sectors based on terrain masking and battery.</div>
                         </div>
-                        <div class="node-template" data-node-type="sector-planner">
+                        <div class="node-template" data-node-type="engagement-authorization">
                             <div class="node-template-header">
-                                <span class="node-template-status zones">6 ZONES</span>
+                                <span class="node-template-status approval">AWAITING APPROVAL</span>
                             </div>
-                            <div class="node-template-title">Sector Planner</div>
-                            <div class="node-template-desc">Splits the survey region into fictional sectors for swarm coverage.</div>
+                            <div class="node-template-title">Engagement Authorization</div>
+                            <div class="node-template-desc">Human operator approves engagement — required by law.</div>
                         </div>
-                    </div>
-
-                    <div class="palette-section">
-                        <div class="palette-title">Execution Nodes</div>
-                        <div class="node-template" data-node-type="risk-check">
+                        <div class="node-template" data-node-type="execute">
                             <div class="node-template-header">
-                                <span class="node-template-status caution">CAUTION</span>
+                                <span class="node-template-status pending">PENDING</span>
                             </div>
-                            <div class="node-template-title">Risk Check</div>
-                            <div class="node-template-desc">Raises fictional signal/weather/battery warnings before the route can proceed.</div>
+                            <div class="node-template-title">Execute</div>
+                            <div class="node-template-desc">Swarm executes with autonomous deconfliction.</div>
                         </div>
-                        <div class="node-template" data-node-type="route-simulation">
+                        <div class="node-template" data-node-type="battle-damage-assessment">
                             <div class="node-template-header">
-                                <span class="node-template-status">72% COV</span>
+                                <span class="node-template-status pending">PENDING</span>
                             </div>
-                            <div class="node-template-title">Route Simulation</div>
-                            <div class="node-template-desc">Animates planned coverage progress across the simulated survey path.</div>
+                            <div class="node-template-title">Battle Damage Assessment</div>
+                            <div class="node-template-desc">Post-strike evaluation of target destruction and collateral effects.</div>
                         </div>
-                    </div>
-
-                    <div class="palette-section">
-                        <div class="palette-title">Output Nodes</div>
                         <div class="node-template" data-node-type="report-summary">
                             <div class="node-template-header">
-                                <span class="node-template-status report">REPORT</span>
+                                <span class="node-template-status pending">PENDING</span>
                             </div>
-                            <div class="node-template-title">Report Summary</div>
-                            <div class="node-template-desc">Summarizes simulated coverage, anomaly count, and unresolved warnings.</div>
+                            <div class="node-template-title">Mission Report</div>
+                            <div class="node-template-desc">Mission summary: target status, ammunition expended, losses sustained.</div>
                         </div>
                     </div>
                 </div>
@@ -912,6 +925,7 @@
 
             <div class="modal-actions">
                 <button class="btn-secondary" id="modal-cancel-btn">Cancel</button>
+                <button class="btn-secondary" id="ai-generate-btn">🤖 AI Generate from Objective</button>
                 <button class="btn-primary" id="execute-mission-btn">Execute Mission</button>
             </div>
         </div>
@@ -2153,15 +2167,62 @@
         let connectionStart = null;
         let tempLine = null;
 
-        // Node templates configuration
+        // Node templates configuration - Real kill chain stages matching military doctrine
         const nodeConfig = {
-            'mission-trigger': { title: 'Mission Trigger', status: 'READY', statusClass: 'ready', desc: 'Launches the simulated search/survey sequence for the local room.', state: 'IDLE' },
-            'camera-intake': { title: 'Camera Intake', status: '3 FEEDS', statusClass: 'feeds', desc: 'Tracks the three phone feeds as visual context only. No CV analysis is performed.', state: 'IDLE' },
-            'swarm-assignment': { title: 'Swarm Assignment', status: '4 UNITS', statusClass: 'units', desc: 'Assigns simulated drones to sectors based on battery, spacing, and line of sight.', state: 'IDLE' },
-            'sector-planner': { title: 'Sector Planner', status: '6 ZONES', statusClass: 'zones', desc: 'Splits the survey region into fictional sectors for swarm coverage.', state: 'IDLE' },
-            'risk-check': { title: 'Risk Check', status: 'CAUTION', statusClass: 'caution', desc: 'Raises fictional signal/weather/battery warnings before the route can proceed.', state: 'IDLE' },
-            'route-simulation': { title: 'Route Simulation', status: '72% COV', statusClass: '', desc: 'Animates planned coverage progress across the simulated survey path.', state: 'IDLE' },
-            'report-summary': { title: 'Report Summary', status: 'REPORT', statusClass: 'report', desc: 'Summarizes simulated coverage, anomaly count, and unresolved warnings.', state: 'IDLE' }
+            'mission-trigger': {
+                title: 'Mission Trigger',
+                status: 'PENDING',
+                statusClass: 'pending',
+                desc: 'Operator confirms target coordinates and rules of engagement. Authorization required before proceeding.',
+                state: 'PENDING',
+                isHumanApproval: true
+            },
+            'isr-phase': {
+                title: 'ISR Phase',
+                status: 'PENDING',
+                statusClass: 'pending',
+                desc: '2 scout drones survey AO, build terrain picture, identify threats. Provides intelligence for engagement decision.',
+                state: 'PENDING',
+                scoutCount: 2
+            },
+            'swarm-assignment': {
+                title: 'Swarm Assignment',
+                status: 'PENDING',
+                statusClass: 'pending',
+                desc: '8 attack drones assigned sectors based on terrain masking and battery. Optimizes coverage and survivability.',
+                state: 'PENDING',
+                droneCount: 8
+            },
+            'engagement-authorization': {
+                title: 'Engagement Authorization',
+                status: 'AWAITING APPROVAL',
+                statusClass: 'approval',
+                desc: 'Human operator approves engagement — required by law. Critical human-in-the-loop safeguard.',
+                state: 'AWAITING APPROVAL',
+                isHumanApproval: true,
+                requiresConfirmation: true
+            },
+            'execute': {
+                title: 'Execute',
+                status: 'PENDING',
+                statusClass: 'pending',
+                desc: 'Swarm executes with autonomous deconfliction. Terrain-aware pathfinding minimizes exposure.',
+                state: 'PENDING'
+            },
+            'battle-damage-assessment': {
+                title: 'Battle Damage Assessment',
+                status: 'PENDING',
+                statusClass: 'pending',
+                desc: 'Post-strike evaluation of target destruction and collateral effects. Determines mission success.',
+                state: 'PENDING'
+            },
+            'report-summary': {
+                title: 'Mission Report',
+                status: 'PENDING',
+                statusClass: 'pending',
+                desc: 'Comprehensive mission summary: target status, ammunition expended, losses sustained, ROE compliance.',
+                state: 'PENDING'
+            }
         };
 
         // Open modal
@@ -2184,6 +2245,104 @@
             }
         });
 
+        // AI Generate handler
+        const aiGenerateBtn = document.getElementById('ai-generate-btn');
+        aiGenerateBtn.addEventListener('click', async () => {
+            const objective = prompt('Enter mission objective:\n\nExample: "Scout the northern ridge, identify defensive positions, engage with minimum exposure"');
+
+            if (!objective || objective.trim() === '') {
+                return;
+            }
+
+            aiGenerateBtn.disabled = true;
+            aiGenerateBtn.textContent = '🤖 Generating...';
+
+            try {
+                const response = await fetch('/api/generate-killchain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ objective })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                // Clear existing nodes
+                for (let i = flowNodes.length - 1; i >= 0; i--) {
+                    const node = flowNodes[i];
+                    flowchartCanvas.removeChild(node.element);
+                }
+                flowNodes.length = 0;
+
+                // Clear existing connections
+                for (let i = flowConnections.length - 1; i >= 0; i--) {
+                    connectionSvg.removeChild(flowConnections[i].line);
+                }
+                flowConnections.length = 0;
+
+                // Create nodes from AI response
+                let yOffset = 150;
+                const nodeMap = {};
+
+                for (const nodeType of data.nodes) {
+                    const config = nodeConfig[nodeType];
+                    if (config) {
+                        const xPos = 450;
+                        const yPos = yOffset;
+                        createFlowNode(nodeType, config, xPos, yPos);
+
+                        const nodeId = `node-${nodeIdCounter - 1}`;
+                        nodeMap[nodeType] = nodeId;
+
+                        yOffset += 120;
+                    }
+                }
+
+                // Create connections based on flow
+                setTimeout(() => {
+                    for (let i = 0; i < data.nodes.length - 1; i++) {
+                        const fromType = data.nodes[i];
+                        const toType = data.nodes[i + 1];
+
+                        const fromNode = flowNodes.find(n => n.type === fromType);
+                        const toNode = flowNodes.find(n => n.type === toType);
+
+                        if (fromNode && toNode) {
+                            const fromPort = fromNode.element.querySelector('.flow-node-port.output');
+                            const toPort = toNode.element.querySelector('.flow-node-port.input');
+
+                            const startPos = getPortPosition(fromNode.element, fromPort);
+                            const endPos = getPortPosition(toNode.element, toPort);
+
+                            const line = createConnectionLine(startPos.x, startPos.y, endPos.x, endPos.y);
+                            connectionSvg.appendChild(line);
+
+                            flowConnections.push({
+                                id: `conn-${connectionIdCounter++}`,
+                                fromId: fromNode.id,
+                                toId: toNode.id,
+                                fromPort: fromPort,
+                                toPort: toPort,
+                                line: line
+                            });
+                        }
+                    }
+                }, 100);
+
+                console.log('AI generated kill chain:', data.nodes);
+
+            } catch (error) {
+                alert('Failed to generate kill chain: ' + error.message);
+            } finally {
+                aiGenerateBtn.disabled = false;
+                aiGenerateBtn.textContent = '🤖 AI Generate from Objective';
+            }
+        });
+
         // Drag from palette to canvas
         document.querySelectorAll('.node-template').forEach(template => {
             template.addEventListener('click', (e) => {
@@ -2201,6 +2360,9 @@
             nodeEl.style.left = x + 'px';
             nodeEl.style.top = y + 'px';
 
+            const approvalButton = config.requiresConfirmation ?
+                `<button class="approve-btn" data-node-id="${nodeId}">CONFIRM ENGAGEMENT</button>` : '';
+
             nodeEl.innerHTML = `
                 <div class="flow-node-header">
                     <span class="flow-node-status ${config.statusClass}">${config.status}</span>
@@ -2210,6 +2372,7 @@
                 <div class="flow-node-body">
                     <div class="flow-node-desc">${config.desc}</div>
                     <div class="flow-node-state">${config.state}</div>
+                    ${approvalButton}
                 </div>
                 <div class="flow-node-port input"></div>
                 <div class="flow-node-port output"></div>
@@ -2255,6 +2418,28 @@
                 flowNodes.splice(flowNodes.findIndex(n => n.id === nodeId), 1);
             });
 
+            // Add approval button handler if exists
+            const approveBtn = nodeEl.querySelector('.approve-btn');
+            if (approveBtn) {
+                approveBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const statusEl = nodeEl.querySelector('.flow-node-status');
+                    const stateEl = nodeEl.querySelector('.flow-node-state');
+
+                    // Update to approved state
+                    statusEl.textContent = 'APPROVED';
+                    statusEl.className = 'flow-node-status complete';
+                    stateEl.textContent = 'APPROVED';
+
+                    // Update button
+                    approveBtn.textContent = '✓ AUTHORIZED';
+                    approveBtn.classList.add('approved');
+                    approveBtn.disabled = true;
+
+                    console.log(`Engagement authorized for node ${nodeId}`);
+                });
+            }
+
             // Add port click handlers for connections
             const outputPort = nodeEl.querySelector('.flow-node-port.output');
             const inputPort = nodeEl.querySelector('.flow-node-port.input');
@@ -2271,7 +2456,7 @@
                 }
             });
 
-            flowNodes.push({ id: nodeId, type, element: nodeEl });
+            flowNodes.push({ id: nodeId, type, element: nodeEl, config });
         }
 
         // ── Connection System ──
@@ -2453,47 +2638,43 @@
 
             // Execute nodes based on order
             const hasMissionTrigger = executionOrder.includes('mission-trigger');
-            const hasRouteSimulation = executionOrder.includes('route-simulation');
+            const hasISRPhase = executionOrder.includes('isr-phase');
             const hasSwarmAssignment = executionOrder.includes('swarm-assignment');
-            const hasSectorPlanner = executionOrder.includes('sector-planner');
-            const hasRiskCheck = executionOrder.includes('risk-check');
-            const hasCameraIntake = executionOrder.includes('camera-intake');
+            const hasEngagementAuth = executionOrder.includes('engagement-authorization');
+            const hasExecute = executionOrder.includes('execute');
+            const hasBDA = executionOrder.includes('battle-damage-assessment');
 
-            // Formation selection based on nodes
-            if (hasRouteSimulation && hasSectorPlanner) {
-                // Grid for sector planning + route simulation
+            // Formation selection based on kill chain nodes
+            if (hasISRPhase && hasSwarmAssignment) {
+                // Grid for coordinated ISR + attack
                 switchFormation('grid');
-            } else if (hasRouteSimulation) {
-                // Delta formation for route simulation
+            } else if (hasExecute && hasSwarmAssignment) {
+                // Delta formation for coordinated strike
                 switchFormation('delta');
-            } else if (hasSwarmAssignment && hasMissionTrigger) {
-                // Swarm for basic swarm assignment
+            } else if (hasSwarmAssignment) {
+                // Swarm for distributed attack
                 switchFormation('swarm');
-            } else if (hasSectorPlanner) {
-                // Perimeter for sector planning
+            } else if (hasISRPhase) {
+                // Perimeter for reconnaissance
                 switchFormation('perimeter');
             } else if (flowNodes.length > 0) {
-                // Random formation
-                const formationKeys = Object.keys(formations);
-                const randomFormation = formationKeys[Math.floor(Math.random() * formationKeys.length)];
-                switchFormation(randomFormation);
+                // Helix for general operations
+                switchFormation('helix');
             }
 
-            // Environment selection based on nodes
-            if (hasRiskCheck) {
-                // Volcanic for high-risk missions
+            // Environment selection based on mission type
+            if (hasEngagementAuth && hasExecute) {
+                // Volcanic for high-threat combat operations
                 switchEnvironment('volcanic');
-            } else if (hasCameraIntake) {
-                // Arctic for camera surveillance (clear visibility)
+            } else if (hasISRPhase) {
+                // Arctic for ISR missions (clear visibility)
                 switchEnvironment('arctic');
             } else if (hasSwarmAssignment) {
                 // Desert for swarm operations
                 switchEnvironment('desert');
             } else if (flowNodes.length > 0) {
-                // Random environment
-                const envKeys = Object.keys(environments);
-                const randomEnv = envKeys[Math.floor(Math.random() * envKeys.length)];
-                switchEnvironment(randomEnv);
+                // Alpine for general operations
+                switchEnvironment('alpine');
             }
 
             // Trigger attack if we have nodes

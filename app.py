@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 import fal_client
+import anthropic
 
 load_dotenv()
 
@@ -15,6 +16,11 @@ app = Flask(__name__, static_folder="static")
 google_client = None
 if "GOOGLE_API_KEY" in os.environ:
     google_client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+
+# Initialize Anthropic client
+anthropic_client = None
+if "ANTHROPIC_API_KEY" in os.environ:
+    anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 
 @app.route("/")
@@ -97,6 +103,76 @@ def generate_3d():
 @app.route("/simulation")
 def simulation():
     return send_from_directory("static", "simulation.html")
+
+
+@app.route("/api/generate-killchain", methods=["POST"])
+def generate_killchain():
+    if not anthropic_client:
+        return jsonify({"error": "Anthropic API key not configured"}), 503
+
+    data = request.json
+    objective = data.get("objective", "")
+
+    if not objective:
+        return jsonify({"error": "Objective is required"}), 400
+
+    try:
+        # Call Claude API to analyze objective and generate kill chain
+        message = anthropic_client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"""You are a military mission planning AI. Given a mission objective, generate an appropriate kill chain sequence.
+
+Available kill chain nodes:
+- mission-trigger: Operator confirms target coordinates and rules of engagement
+- isr-phase: Scout drones survey area of operations, build terrain picture, identify threats
+- swarm-assignment: Attack drones assigned sectors based on terrain masking and battery
+- engagement-authorization: Human operator approves engagement (REQUIRED BY LAW)
+- execute: Swarm executes with autonomous deconfliction
+- battle-damage-assessment: Post-strike evaluation of target destruction
+- report-summary: Mission summary and ROE compliance
+
+Mission Objective: {objective}
+
+Return ONLY a JSON array of node types in execution order. The engagement-authorization node is MANDATORY for any lethal operation.
+
+Example response: ["mission-trigger", "isr-phase", "swarm-assignment", "engagement-authorization", "execute", "battle-damage-assessment", "report-summary"]
+
+Respond with JSON only, no explanation."""
+                }
+            ]
+        )
+
+        # Parse response
+        response_text = message.content[0].text.strip()
+
+        # Extract JSON from response (handle markdown code blocks)
+        if "```" in response_text:
+            import re
+            json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', response_text, re.DOTALL)
+            if json_match:
+                response_text = json_match.group(1)
+
+        import json
+        nodes = json.loads(response_text)
+
+        # Validate nodes
+        valid_nodes = ['mission-trigger', 'isr-phase', 'swarm-assignment', 'engagement-authorization', 'execute', 'battle-damage-assessment', 'report-summary']
+        nodes = [n for n in nodes if n in valid_nodes]
+
+        # Ensure engagement-authorization is included for lethal ops
+        if 'execute' in nodes and 'engagement-authorization' not in nodes:
+            # Insert before execute
+            exec_index = nodes.index('execute')
+            nodes.insert(exec_index, 'engagement-authorization')
+
+        return jsonify({"nodes": nodes})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
