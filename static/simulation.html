@@ -30,6 +30,528 @@
             color: rgba(255,255,255,0.6);
             text-shadow: 0 1px 4px rgba(0,0,0,0.5);
         }
+
+        #attack-hud {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            z-index: 10;
+            pointer-events: none;
+            text-align: right;
+        }
+
+        #attack-status {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        #attack-status.active {
+            color: #ff4444;
+            text-shadow: 0 0 10px rgba(255,68,68,0.5);
+        }
+
+        #ammo-display {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            margin-bottom: 4px;
+        }
+
+        #ammo-display.low {
+            color: #ff8800;
+        }
+
+        #ammo-display.empty {
+            color: #ff0000;
+        }
+
+        #ammo-bar {
+            width: 150px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            float: right;
+        }
+
+        #ammo-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00cc66);
+            transition: width 0.2s ease;
+            border-radius: 3px;
+        }
+
+        #ammo-fill.low {
+            background: linear-gradient(90deg, #ffaa00, #ff8800);
+        }
+
+        #ammo-fill.empty {
+            background: linear-gradient(90deg, #ff4444, #ff0000);
+        }
+
+        #metrics-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 8px;
+            padding: 12px 20px;
+            z-index: 20;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            gap: 24px;
+            pointer-events: auto;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .metric-value.danger {
+            color: #ff4444;
+        }
+
+        #reset-btn {
+            background: rgba(255,68,68,0.2);
+            border: 1px solid rgba(255,68,68,0.4);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+            align-self: center;
+        }
+
+        #reset-btn:hover {
+            background: rgba(255,68,68,0.3);
+            border-color: rgba(255,68,68,0.6);
+        }
+
+        #mission-upload-btn {
+            background: rgba(68,144,255,0.2);
+            border: 1px solid rgba(68,144,255,0.4);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+            align-self: center;
+        }
+
+        #mission-upload-btn:hover {
+            background: rgba(68,144,255,0.3);
+            border-color: rgba(68,144,255,0.6);
+        }
+
+        #mission-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            animation: fadeIn 0.2s ease;
+        }
+
+        #mission-modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: rgba(15, 15, 20, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 0;
+            max-width: 95vw;
+            width: 1400px;
+            max-height: 90vh;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 28px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .flowchart-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .node-palette {
+            width: 260px;
+            background: rgba(10,10,15,0.6);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .palette-section {
+            margin-bottom: 24px;
+        }
+
+        .palette-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 12px;
+        }
+
+        .node-template {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+
+        .node-template:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(68,144,255,0.4);
+            transform: translateX(4px);
+        }
+
+        .node-template:active {
+            cursor: grabbing;
+        }
+
+        .node-template-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .node-template-status {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .node-template-status.ready {
+            background: rgba(68,255,144,0.2);
+            color: #44ff90;
+        }
+
+        .node-template-status.caution {
+            background: rgba(255,170,0,0.2);
+            color: #ffaa00;
+        }
+
+        .node-template-status.feeds {
+            background: rgba(68,144,255,0.2);
+            color: #4490ff;
+        }
+
+        .node-template-status.units {
+            background: rgba(170,68,255,0.2);
+            color: #aa44ff;
+        }
+
+        .node-template-status.zones {
+            background: rgba(255,100,100,0.2);
+            color: #ff6464;
+        }
+
+        .node-template-status.report {
+            background: rgba(100,200,255,0.2);
+            color: #64c8ff;
+        }
+
+        .node-template-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #fff;
+            flex: 1;
+        }
+
+        .node-template-desc {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.4;
+        }
+
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            background:
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, transparent 1px, transparent 20px),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0px, transparent 1px, transparent 20px);
+            overflow: auto;
+        }
+
+        .flow-node {
+            position: absolute;
+            min-width: 220px;
+            background: rgba(20,20,25,0.95);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 0;
+            cursor: move;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .flow-node:hover {
+            border-color: rgba(68,144,255,0.5);
+        }
+
+        .flow-node.selected {
+            border-color: rgba(68,144,255,0.8);
+            box-shadow: 0 0 0 2px rgba(68,144,255,0.3);
+        }
+
+        .flow-node-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: move;
+        }
+
+        .flow-node-status {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .flow-node-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+            flex: 1;
+        }
+
+        .flow-node-remove {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .flow-node-remove:hover {
+            background: rgba(255,68,68,0.2);
+            color: #ff4444;
+        }
+
+        .flow-node-body {
+            padding: 12px;
+        }
+
+        .flow-node-desc {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .flow-node-state {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.4);
+            padding: 6px 8px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .flow-node-port {
+            width: 12px;
+            height: 12px;
+            background: rgba(68,144,255,0.3);
+            border: 2px solid #4490ff;
+            border-radius: 50%;
+            position: absolute;
+            cursor: crosshair;
+            transition: all 0.2s;
+        }
+
+        .flow-node-port:hover {
+            background: #4490ff;
+            transform: scale(1.3);
+        }
+
+        .flow-node-port.input {
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .flow-node-port.output {
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .connection-line {
+            position: absolute;
+            pointer-events: none;
+            stroke: rgba(68,144,255,0.5);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            padding: 16px 28px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(68,144,255,0.3), rgba(68,100,255,0.3));
+            border: 1px solid rgba(68,144,255,0.5);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, rgba(68,144,255,0.4), rgba(68,100,255,0.4));
+            border-color: rgba(68,144,255,0.7);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(68,144,255,0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.3);
+        }
+
         #loading {
             position: fixed;
             inset: 0;
@@ -228,7 +750,15 @@
     <div id="loading">Loading drone model...</div>
     <div id="hud">
         <h2>Drone Swarm</h2>
-        <p>10 drones &middot; 1 cursor-following &middot; drag to orbit &middot; scroll to zoom</p>
+        <p>Click terrain to attack &middot; Right-click to cancel &middot; Drag to orbit</p>
+    </div>
+
+    <div id="attack-hud">
+        <div id="attack-status">Standby</div>
+        <div id="ammo-display">100</div>
+        <div id="ammo-bar">
+            <div id="ammo-fill" style="width: 100%"></div>
+        </div>
     </div>
 
     <div id="environment-panel">
@@ -276,6 +806,114 @@
         <div class="formation-option" data-formation="helix">
             <div class="formation-icon">🌀</div>
             <div class="formation-name">Helix</div>
+        </div>
+    </div>
+
+    <div id="metrics-panel">
+        <div class="metric">
+            <div class="metric-label">Mission Time</div>
+            <div class="metric-value" id="mission-time">0:00</div>
+        </div>
+        <div class="metric">
+            <div class="metric-label">Drones Lost</div>
+            <div class="metric-value" id="drones-destroyed">0</div>
+        </div>
+        <div class="metric">
+            <div class="metric-label">Active Drones</div>
+            <div class="metric-value" id="drones-active">10</div>
+        </div>
+        <div class="metric">
+            <div class="metric-label">Shots Fired</div>
+            <div class="metric-value" id="shots-fired">0</div>
+        </div>
+        <button id="mission-upload-btn">Upload Mission / Kill Chain</button>
+        <button id="reset-btn">Reset Simulation</button>
+    </div>
+
+    <div id="mission-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Kill Chain Builder</div>
+                <button class="modal-close" id="modal-close-btn">&times;</button>
+            </div>
+
+            <div class="flowchart-container">
+                <div class="node-palette">
+                    <div class="palette-section">
+                        <div class="palette-title">Input Nodes</div>
+                        <div class="node-template" data-node-type="mission-trigger">
+                            <div class="node-template-header">
+                                <span class="node-template-status ready">READY</span>
+                            </div>
+                            <div class="node-template-title">Mission Trigger</div>
+                            <div class="node-template-desc">Launches the simulated search/survey sequence for the local room.</div>
+                        </div>
+                        <div class="node-template" data-node-type="camera-intake">
+                            <div class="node-template-header">
+                                <span class="node-template-status feeds">3 FEEDS</span>
+                            </div>
+                            <div class="node-template-title">Camera Intake</div>
+                            <div class="node-template-desc">Tracks the three phone feeds as visual context only. No CV analysis is performed.</div>
+                        </div>
+                    </div>
+
+                    <div class="palette-section">
+                        <div class="palette-title">Tasking Nodes</div>
+                        <div class="node-template" data-node-type="swarm-assignment">
+                            <div class="node-template-header">
+                                <span class="node-template-status units">4 UNITS</span>
+                            </div>
+                            <div class="node-template-title">Swarm Assignment</div>
+                            <div class="node-template-desc">Assigns simulated drones to sectors based on battery, spacing, and line of sight.</div>
+                        </div>
+                        <div class="node-template" data-node-type="sector-planner">
+                            <div class="node-template-header">
+                                <span class="node-template-status zones">6 ZONES</span>
+                            </div>
+                            <div class="node-template-title">Sector Planner</div>
+                            <div class="node-template-desc">Splits the survey region into fictional sectors for swarm coverage.</div>
+                        </div>
+                    </div>
+
+                    <div class="palette-section">
+                        <div class="palette-title">Execution Nodes</div>
+                        <div class="node-template" data-node-type="risk-check">
+                            <div class="node-template-header">
+                                <span class="node-template-status caution">CAUTION</span>
+                            </div>
+                            <div class="node-template-title">Risk Check</div>
+                            <div class="node-template-desc">Raises fictional signal/weather/battery warnings before the route can proceed.</div>
+                        </div>
+                        <div class="node-template" data-node-type="route-simulation">
+                            <div class="node-template-header">
+                                <span class="node-template-status">72% COV</span>
+                            </div>
+                            <div class="node-template-title">Route Simulation</div>
+                            <div class="node-template-desc">Animates planned coverage progress across the simulated survey path.</div>
+                        </div>
+                    </div>
+
+                    <div class="palette-section">
+                        <div class="palette-title">Output Nodes</div>
+                        <div class="node-template" data-node-type="report-summary">
+                            <div class="node-template-header">
+                                <span class="node-template-status report">REPORT</span>
+                            </div>
+                            <div class="node-template-title">Report Summary</div>
+                            <div class="node-template-desc">Summarizes simulated coverage, anomaly count, and unresolved warnings.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="canvas-area" id="flowchart-canvas">
+                    <svg id="connection-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" id="modal-cancel-btn">Cancel</button>
+                <button class="btn-primary" id="execute-mission-btn">Execute Mission</button>
+            </div>
         </div>
     </div>
 
@@ -435,73 +1073,80 @@
         const formations = {
             swarm: {
                 name: 'Swarm Attack',
-                getPosition: (droneIndex, elapsed, baseFlight) => {
+                getPosition: (droneIndex, elapsed, baseFlight, attackPos) => {
                     // Aggressive swarming behavior - drones cluster and move erratically
-                    const swarmCenter = {
+                    const swarmCenter = attackPos ? {
+                        x: attackPos.x,
+                        z: attackPos.z
+                    } : {
                         x: Math.sin(elapsed * 0.3) * 40,
                         z: Math.cos(elapsed * 0.3) * 40
                     };
 
                     const offset = droneIndex * 2.5;
-                    const x = swarmCenter.x + Math.sin(elapsed * 0.8 + offset) * 25 + Math.cos(elapsed * 1.2 + offset) * 15;
-                    const z = swarmCenter.z + Math.cos(elapsed * 0.8 + offset) * 25 + Math.sin(elapsed * 1.2 + offset) * 15;
-                    const y = 40 + Math.sin(elapsed * 0.9 + offset) * 12;
+                    const radius = attackPos ? 20 : 25;
+                    const x = swarmCenter.x + Math.sin(elapsed * 0.8 + offset) * radius + Math.cos(elapsed * 1.2 + offset) * (radius * 0.6);
+                    const z = swarmCenter.z + Math.cos(elapsed * 0.8 + offset) * radius + Math.sin(elapsed * 1.2 + offset) * (radius * 0.6);
+                    const baseHeight = attackPos ? attackPos.y + 25 : 40;
+                    const y = baseHeight + Math.sin(elapsed * 0.9 + offset) * 12;
 
                     return { x, y, z };
                 }
             },
             delta: {
                 name: 'Delta Wing',
-                getPosition: (droneIndex, elapsed, baseFlight) => {
+                getPosition: (droneIndex, elapsed, baseFlight, attackPos) => {
                     // V-formation moving forward
                     const formationSpeed = elapsed * 0.4;
-                    const leaderX = Math.sin(formationSpeed) * 80;
-                    const leaderZ = Math.cos(formationSpeed) * 80;
+                    const centerX = attackPos ? attackPos.x : Math.sin(formationSpeed) * 80;
+                    const centerZ = attackPos ? attackPos.z : Math.cos(formationSpeed) * 80;
+                    const centerY = attackPos ? attackPos.y + 30 : 45;
 
                     if (droneIndex === 0) {
-                        // Leader at the front
-                        return { x: leaderX, y: 45, z: leaderZ };
+                        return { x: centerX, y: centerY, z: centerZ };
                     }
 
                     const side = droneIndex % 2 === 0 ? 1 : -1;
                     const row = Math.floor(droneIndex / 2);
                     const spacing = 15;
 
-                    const angle = Math.atan2(Math.cos(formationSpeed), Math.sin(formationSpeed));
+                    const angle = attackPos ? 0 : Math.atan2(Math.cos(formationSpeed), Math.sin(formationSpeed));
                     const offsetX = side * row * spacing * Math.cos(angle + Math.PI / 2);
                     const offsetZ = side * row * spacing * Math.sin(angle + Math.PI / 2);
                     const back = -row * spacing * 0.7;
 
-                    const x = leaderX + offsetX + back * Math.sin(formationSpeed);
-                    const z = leaderZ + offsetZ + back * Math.cos(formationSpeed);
-                    const y = 45 - row * 2;
+                    const x = centerX + offsetX + (attackPos ? 0 : back * Math.sin(formationSpeed));
+                    const z = centerZ + offsetZ + (attackPos ? 0 : back * Math.cos(formationSpeed));
+                    const y = centerY - row * 2;
 
                     return { x, y, z };
                 }
             },
             perimeter: {
                 name: 'Perimeter Defense',
-                getPosition: (droneIndex, elapsed, baseFlight) => {
-                    // Drones patrol in a circle at different heights
-                    const radius = 60;
+                getPosition: (droneIndex, elapsed, baseFlight, attackPos) => {
+                    const radius = attackPos ? 25 : 60;
                     const angleOffset = (droneIndex / 10) * Math.PI * 2;
                     const rotationSpeed = 0.3;
                     const angle = elapsed * rotationSpeed + angleOffset;
 
-                    const x = Math.cos(angle) * radius;
-                    const z = Math.sin(angle) * radius;
+                    const centerX = attackPos ? attackPos.x : 0;
+                    const centerZ = attackPos ? attackPos.z : 0;
+                    const centerY = attackPos ? attackPos.y + 30 : 50;
+
+                    const x = centerX + Math.cos(angle) * radius;
+                    const z = centerZ + Math.sin(angle) * radius;
                     const heightVariation = Math.sin(droneIndex) * 15;
-                    const y = 50 + heightVariation + Math.sin(elapsed + droneIndex) * 5;
+                    const y = centerY + heightVariation + Math.sin(elapsed + droneIndex) * 5;
 
                     return { x, y, z };
                 }
             },
             grid: {
                 name: 'Grid Matrix',
-                getPosition: (droneIndex, elapsed, baseFlight) => {
-                    // Precise grid formation that rotates slowly
+                getPosition: (droneIndex, elapsed, baseFlight, attackPos) => {
                     const gridSize = 3;
-                    const spacing = 30;
+                    const spacing = attackPos ? 20 : 30;
                     const row = Math.floor(droneIndex / gridSize);
                     const col = droneIndex % gridSize;
 
@@ -512,34 +1157,40 @@
                     const localX = col * spacing - centerOffset;
                     const localZ = row * spacing - centerOffset;
 
-                    // Rotate the grid
-                    const x = localX * Math.cos(angle) - localZ * Math.sin(angle);
-                    const z = localX * Math.sin(angle) + localZ * Math.cos(angle);
+                    const rotX = localX * Math.cos(angle) - localZ * Math.sin(angle);
+                    const rotZ = localX * Math.sin(angle) + localZ * Math.cos(angle);
 
-                    // Add gentle wave motion
-                    const y = 45 + Math.sin(elapsed * 0.5 + droneIndex * 0.3) * 8;
+                    const centerX = attackPos ? attackPos.x : 0;
+                    const centerZ = attackPos ? attackPos.z : 0;
+                    const centerY = attackPos ? attackPos.y + 35 : 45;
+
+                    const x = centerX + rotX;
+                    const z = centerZ + rotZ;
+                    const y = centerY + Math.sin(elapsed * 0.5 + droneIndex * 0.3) * 8;
 
                     return { x, y, z };
                 }
             },
             helix: {
                 name: 'Helix Spiral',
-                getPosition: (droneIndex, elapsed, baseFlight) => {
-                    // Drones spiral upward and downward in a helix pattern
-                    const radius = 50;
-                    const heightRange = 40;
+                getPosition: (droneIndex, elapsed, baseFlight, attackPos) => {
+                    const radius = attackPos ? 30 : 50;
+                    const heightRange = attackPos ? 25 : 40;
                     const speed = 0.5;
                     const verticalSpeed = 0.4;
 
                     const angleOffset = (droneIndex / 10) * Math.PI * 2;
                     const angle = elapsed * speed + angleOffset;
 
-                    const x = Math.cos(angle) * radius;
-                    const z = Math.sin(angle) * radius;
+                    const centerX = attackPos ? attackPos.x : 0;
+                    const centerZ = attackPos ? attackPos.z : 0;
+                    const centerY = attackPos ? attackPos.y + 30 : 40;
 
-                    // Spiral up and down
+                    const x = centerX + Math.cos(angle) * radius;
+                    const z = centerZ + Math.sin(angle) * radius;
+
                     const verticalPhase = elapsed * verticalSpeed + droneIndex * 0.6;
-                    const y = 40 + Math.sin(verticalPhase) * heightRange;
+                    const y = centerY + Math.sin(verticalPhase) * heightRange;
 
                     return { x, y, z };
                 }
@@ -681,6 +1332,251 @@
             }
         });
 
+        // ── Attack System ──
+        let attackTarget = null;
+        let isAttacking = false;
+        let ammoCount = 100;
+        const maxAmmo = 100;
+        const projectiles = [];
+        const explosions = [];
+
+        // ── Threat Systems ──
+        const samSites = [];
+        const jammerSites = [];
+        const smallArmZones = [];
+        let missionStartTime = Date.now() / 1000;
+        let dronesDestroyed = 0;
+        let shotsFired = 0;
+        let timeToTarget = 0;
+        let coverageArea = 0;
+
+        // Reset simulation
+        function resetSimulation() {
+            missionStartTime = Date.now() / 1000;
+            dronesDestroyed = 0;
+            shotsFired = 0;
+            ammoCount = maxAmmo;
+            isAttacking = false;
+            attackTarget = null;
+            targetMarker.visible = false;
+            targetRing.visible = false;
+
+            // Clear projectiles and explosions
+            for (const proj of projectiles) {
+                scene.remove(proj.mesh);
+            }
+            projectiles.length = 0;
+
+            for (const exp of explosions) {
+                scene.remove(exp.mesh);
+            }
+            explosions.length = 0;
+
+            // Restore all drones
+            for (const drone of drones) {
+                drone.visible = true;
+                drone.userData.destroyed = false;
+                drone.userData.health = 100;
+                drone.userData.jammed = false;
+            }
+
+            // Reset SAM fire times
+            for (const sam of samSites) {
+                sam.lastFireTime = 0;
+            }
+        }
+
+        document.getElementById('reset-btn').addEventListener('click', resetSimulation);
+
+        // Create SAM sites (Surface-to-Air Missile)
+        function createSAMSite(x, z) {
+            const th = terrainHeight(x, z);
+
+            // Base platform
+            const baseGeo = new THREE.CylinderGeometry(4, 5, 2, 8);
+            const baseMat = new THREE.MeshStandardMaterial({
+                color: 0x444444,
+                metalness: 0.7,
+                roughness: 0.3
+            });
+            const base = new THREE.Mesh(baseGeo, baseMat);
+            base.position.set(x, th + 1, z);
+            scene.add(base);
+
+            // Radar dish
+            const dishGeo = new THREE.SphereGeometry(2, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+            const dishMat = new THREE.MeshStandardMaterial({
+                color: 0x00ff00,
+                emissive: 0x00ff00,
+                emissiveIntensity: 0.3,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+            const dish = new THREE.Mesh(dishGeo, dishMat);
+            dish.rotation.x = -Math.PI / 2;
+            dish.position.set(x, th + 4, z);
+            scene.add(dish);
+
+            // Range indicator ring
+            const ringGeo = new THREE.RingGeometry(50, 52, 64);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0xff0000,
+                transparent: true,
+                opacity: 0.15,
+                side: THREE.DoubleSide
+            });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.set(x, th + 0.5, z);
+            scene.add(ring);
+
+            samSites.push({
+                position: new THREE.Vector3(x, th + 4, z),
+                range: 50,
+                fireRate: 3.0, // seconds between shots
+                lastFireTime: 0,
+                base: base,
+                dish: dish,
+                ring: ring,
+                active: true
+            });
+        }
+
+        // Create jammer sites (Electronic Warfare)
+        function createJammer(x, z) {
+            const th = terrainHeight(x, z);
+
+            // Tower
+            const towerGeo = new THREE.CylinderGeometry(1, 1.5, 8, 8);
+            const towerMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+            const tower = new THREE.Mesh(towerGeo, towerMat);
+            tower.position.set(x, th + 4, z);
+            scene.add(tower);
+
+            // Antenna
+            const antennaGeo = new THREE.SphereGeometry(1.5, 16, 16);
+            const antennaMat = new THREE.MeshStandardMaterial({
+                color: 0x4444ff,
+                emissive: 0x0000ff,
+                emissiveIntensity: 0.4
+            });
+            const antenna = new THREE.Mesh(antennaGeo, antennaMat);
+            antenna.position.set(x, th + 8, z);
+            scene.add(antenna);
+
+            // Jamming area
+            const jamRingGeo = new THREE.RingGeometry(35, 37, 64);
+            const jamRingMat = new THREE.MeshBasicMaterial({
+                color: 0x4444ff,
+                transparent: true,
+                opacity: 0.1,
+                side: THREE.DoubleSide
+            });
+            const jamRing = new THREE.Mesh(jamRingGeo, jamRingMat);
+            jamRing.rotation.x = -Math.PI / 2;
+            jamRing.position.set(x, th + 0.5, z);
+            scene.add(jamRing);
+
+            jammerSites.push({
+                position: new THREE.Vector3(x, th, z),
+                range: 35,
+                tower: tower,
+                antenna: antenna,
+                ring: jamRing,
+                active: true
+            });
+        }
+
+        // Create small arms fire zone
+        function createSmallArmsZone(x, z, radius) {
+            const th = terrainHeight(x, z);
+
+            const zoneGeo = new THREE.CircleGeometry(radius, 32);
+            const zoneMat = new THREE.MeshBasicMaterial({
+                color: 0xffaa00,
+                transparent: true,
+                opacity: 0.12,
+                side: THREE.DoubleSide
+            });
+            const zone = new THREE.Mesh(zoneGeo, zoneMat);
+            zone.rotation.x = -Math.PI / 2;
+            zone.position.set(x, th + 0.5, z);
+            scene.add(zone);
+
+            smallArmZones.push({
+                position: new THREE.Vector3(x, th, z),
+                radius: radius,
+                hitChance: 0.05, // 5% chance per second in zone
+                mesh: zone
+            });
+        }
+
+        // Initialize threats - strategic placement
+        createSAMSite(-60, -60);
+        createSAMSite(70, 40);
+        createJammer(0, 80);
+        createSmallArmsZone(30, -50, 25);
+        createSmallArmsZone(-70, 30, 30);
+
+        // Create target marker
+        const targetMarkerGeo = new THREE.CylinderGeometry(8, 10, 0.5, 32);
+        const targetMarkerMat = new THREE.MeshStandardMaterial({
+            color: 0xff3333,
+            emissive: 0xff0000,
+            emissiveIntensity: 0.5,
+            transparent: true,
+            opacity: 0.8
+        });
+        const targetMarker = new THREE.Mesh(targetMarkerGeo, targetMarkerMat);
+        targetMarker.visible = false;
+        scene.add(targetMarker);
+
+        // Target ring animation
+        const ringGeo = new THREE.RingGeometry(8, 12, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
+        const targetRing = new THREE.Mesh(ringGeo, ringMat);
+        targetRing.rotation.x = -Math.PI / 2;
+        targetRing.visible = false;
+        scene.add(targetRing);
+
+        // Click to set attack target
+        window.addEventListener('click', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(terrain);
+
+            if (intersects.length > 0) {
+                const point = intersects[0].point;
+                attackTarget = point.clone();
+                isAttacking = true;
+
+                // Position target marker
+                targetMarker.position.set(point.x, point.y + 0.5, point.z);
+                targetMarker.visible = true;
+                targetRing.position.set(point.x, point.y + 1, point.z);
+                targetRing.visible = true;
+
+                // Reload ammo on new target
+                ammoCount = maxAmmo;
+            }
+        });
+
+        // Right-click to cancel attack
+        window.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            isAttacking = false;
+            attackTarget = null;
+            targetMarker.visible = false;
+            targetRing.visible = false;
+        });
+
         // ── Load drones ──
         const drones = [];
         const DRONE_COUNT = 10;
@@ -711,7 +1607,7 @@
                 const angle = (i / DRONE_COUNT) * Math.PI * 2;
                 drone.userData.flight = {
                     radius: 50 + Math.random() * 80,
-                    radiusY: 0.5 + Math.random() * 0.5, // ellipse ratio
+                    radiusY: 0.5 + Math.random() * 0.5,
                     speed: 0.25 + Math.random() * 0.35,
                     altitude: 35 + Math.random() * 35,
                     phase: angle,
@@ -720,8 +1616,13 @@
                     wobbleAmp: 1 + Math.random() * 2,
                     wobbleFreq: 2 + Math.random() * 2,
                     bankStrength: 0.25 + Math.random() * 0.2,
-                    pattern: i % 3, // 0: circle, 1: ellipse, 2: figure-8
+                    pattern: i % 3,
                 };
+
+                // Threat tracking
+                drone.userData.jammed = false;
+                drone.userData.destroyed = false;
+                drone.userData.health = 100;
 
                 scene.add(drone);
                 drones.push(drone);
@@ -752,6 +1653,92 @@
             }
         }
 
+        // ── Projectile System ──
+        function createProjectile(startPos, targetPos) {
+            const projectileGeo = new THREE.SphereGeometry(0.3, 8, 8);
+            const projectileMat = new THREE.MeshBasicMaterial({
+                color: 0xffaa00,
+                emissive: 0xff6600,
+                emissiveIntensity: 1
+            });
+            const projectile = new THREE.Mesh(projectileGeo, projectileMat);
+            projectile.position.copy(startPos);
+
+            // Add trail effect
+            const trailGeo = new THREE.CylinderGeometry(0.1, 0.15, 1, 6);
+            const trailMat = new THREE.MeshBasicMaterial({
+                color: 0xff8800,
+                transparent: true,
+                opacity: 0.6
+            });
+            const trail = new THREE.Mesh(trailGeo, trailMat);
+            projectile.add(trail);
+
+            scene.add(projectile);
+
+            // Store projectile data
+            projectiles.push({
+                mesh: projectile,
+                start: startPos.clone(),
+                target: targetPos.clone(),
+                progress: 0,
+                speed: 2.0 + Math.random() * 1.0
+            });
+        }
+
+        function createExplosion(position) {
+            // Create multiple particle spheres for explosion effect
+            for (let i = 0; i < 15; i++) {
+                const size = 0.5 + Math.random() * 1.5;
+                const particleGeo = new THREE.SphereGeometry(size, 8, 8);
+                const particleMat = new THREE.MeshBasicMaterial({
+                    color: Math.random() > 0.5 ? 0xff6600 : 0xff3300,
+                    transparent: true,
+                    opacity: 1
+                });
+                const particle = new THREE.Mesh(particleGeo, particleMat);
+                particle.position.copy(position);
+
+                scene.add(particle);
+
+                // Random velocity
+                const velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.3) * 12,
+                    (Math.random() - 0.5) * 15
+                );
+
+                explosions.push({
+                    mesh: particle,
+                    velocity: velocity,
+                    life: 1.0,
+                    decay: 0.8 + Math.random() * 0.4
+                });
+            }
+
+            // Create shockwave ring
+            const ringGeo = new THREE.RingGeometry(0.5, 1, 32);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0xff4400,
+                transparent: true,
+                opacity: 0.8,
+                side: THREE.DoubleSide
+            });
+            const shockwave = new THREE.Mesh(ringGeo, ringMat);
+            shockwave.position.copy(position);
+            shockwave.rotation.x = -Math.PI / 2;
+            scene.add(shockwave);
+
+            explosions.push({
+                mesh: shockwave,
+                velocity: new THREE.Vector3(0, 0, 0),
+                life: 1.0,
+                decay: 2.5,
+                isShockwave: true,
+                scale: 1
+            });
+        }
+
         // ── Animate ──
         const clock = new THREE.Clock();
 
@@ -762,8 +1749,128 @@
             // Update environment transition
             updateTransition(delta);
 
+            // Animate target marker
+            if (targetMarker.visible) {
+                targetMarker.rotation.y += delta * 2;
+                targetRing.scale.set(1 + Math.sin(elapsed * 3) * 0.2, 1, 1 + Math.sin(elapsed * 3) * 0.2);
+                targetRing.material.opacity = 0.4 + Math.sin(elapsed * 4) * 0.2;
+            }
+
+            // Update projectiles
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const proj = projectiles[i];
+                proj.progress += delta * proj.speed;
+
+                if (proj.progress >= 1.0) {
+                    // Hit target - create explosion
+                    createExplosion(proj.target);
+                    scene.remove(proj.mesh);
+                    projectiles.splice(i, 1);
+                } else {
+                    // Move projectile
+                    proj.mesh.position.lerpVectors(proj.start, proj.target, proj.progress);
+
+                    // Orient towards target
+                    const dir = new THREE.Vector3().subVectors(proj.target, proj.mesh.position).normalize();
+                    proj.mesh.lookAt(proj.mesh.position.clone().add(dir));
+                }
+            }
+
+            // Update explosions
+            for (let i = explosions.length - 1; i >= 0; i--) {
+                const exp = explosions[i];
+                exp.life -= delta * exp.decay;
+
+                if (exp.life <= 0) {
+                    scene.remove(exp.mesh);
+                    explosions.splice(i, 1);
+                } else {
+                    if (exp.isShockwave) {
+                        // Expand shockwave
+                        exp.scale += delta * 15;
+                        exp.mesh.scale.set(exp.scale, exp.scale, exp.scale);
+                        exp.mesh.material.opacity = exp.life * 0.8;
+                    } else {
+                        // Move particle
+                        exp.velocity.y -= delta * 9.8; // gravity
+                        exp.mesh.position.add(exp.velocity.clone().multiplyScalar(delta));
+                        exp.mesh.material.opacity = exp.life;
+
+                        // Shrink particle
+                        const scale = exp.life;
+                        exp.mesh.scale.set(scale, scale, scale);
+                    }
+                }
+            }
+
+            // Process threats
             for (let i = 0; i < drones.length; i++) {
                 const drone = drones[i];
+                if (drone.userData.destroyed) continue;
+
+                // Check SAM threats
+                for (const sam of samSites) {
+                    if (!sam.active) continue;
+                    const dist = drone.position.distanceTo(sam.position);
+                    if (dist < sam.range && elapsed - sam.lastFireTime > sam.fireRate) {
+                        // SAM fires!
+                        sam.lastFireTime = elapsed;
+                        if (Math.random() < 0.3) { // 30% hit chance
+                            drone.userData.destroyed = true;
+                            dronesDestroyed++;
+                            createExplosion(drone.position.clone());
+                            drone.visible = false;
+                        }
+                    }
+                }
+
+                // Check jammer effects
+                drone.userData.jammed = false;
+                for (const jammer of jammerSites) {
+                    if (!jammer.active) continue;
+                    const dist = new THREE.Vector2(drone.position.x, drone.position.z)
+                        .distanceTo(new THREE.Vector2(jammer.position.x, jammer.position.z));
+                    if (dist < jammer.range) {
+                        drone.userData.jammed = true;
+                    }
+                }
+
+                // Check small arms zones
+                for (const zone of smallArmZones) {
+                    const dist = new THREE.Vector2(drone.position.x, drone.position.z)
+                        .distanceTo(new THREE.Vector2(zone.position.x, zone.position.z));
+                    if (dist < zone.radius) {
+                        if (Math.random() < zone.hitChance * delta) {
+                            drone.userData.health -= 20;
+                            if (drone.userData.health <= 0) {
+                                drone.userData.destroyed = true;
+                                dronesDestroyed++;
+                                createExplosion(drone.position.clone());
+                                drone.visible = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Animate SAM radars
+            for (const sam of samSites) {
+                if (sam.active) {
+                    sam.dish.rotation.y += delta;
+                }
+            }
+
+            // Animate jammers
+            for (const jammer of jammerSites) {
+                if (jammer.active) {
+                    jammer.antenna.rotation.y += delta * 2;
+                    jammer.ring.material.opacity = 0.1 + Math.sin(elapsed * 2) * 0.05;
+                }
+            }
+
+            for (let i = 0; i < drones.length; i++) {
+                const drone = drones[i];
+                if (drone.userData.destroyed) continue;
 
                 if (drone.userData.isCursorDrone) {
                     // Cursor drone follows mouse
@@ -790,8 +1897,8 @@
                     const formation = formations[currentFormation];
                     const f = drone.userData.flight;
 
-                    // Get formation position
-                    const targetPos = formation.getPosition(i, elapsed, f);
+                    // Get formation position (with attack target if active)
+                    const targetPos = formation.getPosition(i, elapsed, f, isAttacking ? attackTarget : null);
 
                     // Store previous position for velocity calculation
                     if (!drone.userData.prevPos) {
@@ -799,11 +1906,32 @@
                     }
                     drone.userData.prevPos.copy(drone.position);
 
+                    // Jammed drones have erratic movement
+                    const lerpSpeed = drone.userData.jammed ? 0.02 : 0.05;
+                    const jitterAmount = drone.userData.jammed ? 3 : 0;
+
                     // Smoothly move to formation position
                     drone.position.lerp(
-                        new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z),
-                        0.05
+                        new THREE.Vector3(
+                            targetPos.x + (Math.random() - 0.5) * jitterAmount,
+                            targetPos.y + (Math.random() - 0.5) * jitterAmount,
+                            targetPos.z + (Math.random() - 0.5) * jitterAmount
+                        ),
+                        lerpSpeed
                     );
+
+                    // Visual feedback for jammed drones
+                    drone.traverse(child => {
+                        if (child.isMesh && child.material) {
+                            if (drone.userData.jammed) {
+                                child.material.emissive = new THREE.Color(0x0000ff);
+                                child.material.emissiveIntensity = Math.sin(elapsed * 10) * 0.3;
+                            } else {
+                                child.material.emissive = new THREE.Color(0x000000);
+                                child.material.emissiveIntensity = 0;
+                            }
+                        }
+                    });
 
                     // Calculate heading based on movement direction
                     const velocity = new THREE.Vector3().subVectors(drone.position, drone.userData.prevPos);
@@ -820,7 +1948,74 @@
                     // Add slight pitch based on vertical movement
                     const verticalVel = velocity.y;
                     drone.rotation.x = verticalVel * 0.1;
+
+                    // Fire projectiles when attacking
+                    if (isAttacking && attackTarget && ammoCount > 0) {
+                        // Each drone fires randomly but not too frequently
+                        if (!drone.userData.lastFireTime) drone.userData.lastFireTime = 0;
+                        if (elapsed - drone.userData.lastFireTime > 0.5 + Math.random() * 1.5) {
+                            createProjectile(drone.position.clone(), attackTarget.clone());
+                            drone.userData.lastFireTime = elapsed;
+                            ammoCount--;
+                            shotsFired++;
+                        }
+                    }
                 }
+            }
+
+            // Update attack HUD
+            const attackStatusEl = document.getElementById('attack-status');
+            const ammoDisplayEl = document.getElementById('ammo-display');
+            const ammoFillEl = document.getElementById('ammo-fill');
+
+            if (isAttacking) {
+                attackStatusEl.textContent = 'Engaging Target';
+                attackStatusEl.classList.add('active');
+            } else {
+                attackStatusEl.textContent = 'Standby';
+                attackStatusEl.classList.remove('active');
+            }
+
+            ammoDisplayEl.textContent = ammoCount;
+            const ammoPercent = (ammoCount / maxAmmo) * 100;
+            ammoFillEl.style.width = ammoPercent + '%';
+
+            // Update ammo colors
+            ammoDisplayEl.classList.remove('low', 'empty');
+            ammoFillEl.classList.remove('low', 'empty');
+
+            if (ammoCount === 0) {
+                ammoDisplayEl.classList.add('empty');
+                ammoFillEl.classList.add('empty');
+                // Stop attacking when out of ammo
+                if (isAttacking) {
+                    isAttacking = false;
+                    targetMarker.visible = false;
+                    targetRing.visible = false;
+                }
+            } else if (ammoCount < maxAmmo * 0.3) {
+                ammoDisplayEl.classList.add('low');
+                ammoFillEl.classList.add('low');
+            }
+
+            // Update metrics dashboard
+            const currentTime = Date.now() / 1000 - missionStartTime;
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = Math.floor(currentTime % 60);
+            document.getElementById('mission-time').textContent =
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            const activeDrones = DRONE_COUNT - dronesDestroyed;
+            const dronesDestroyedEl = document.getElementById('drones-destroyed');
+            dronesDestroyedEl.textContent = dronesDestroyed;
+            document.getElementById('drones-active').textContent = activeDrones;
+            document.getElementById('shots-fired').textContent = shotsFired;
+
+            // Highlight destroyed drones in red if any
+            if (dronesDestroyed > 0) {
+                dronesDestroyedEl.classList.add('danger');
+            } else {
+                dronesDestroyedEl.classList.remove('danger');
             }
 
             controls.update();
@@ -939,6 +2134,390 @@
             option.addEventListener('click', () => {
                 switchFormation(option.dataset.formation);
             });
+        });
+
+        // ── Kill Chain Flowchart Builder ──
+        const missionModal = document.getElementById('mission-modal');
+        const missionUploadBtn = document.getElementById('mission-upload-btn');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const executeMissionBtn = document.getElementById('execute-mission-btn');
+        const flowchartCanvas = document.getElementById('flowchart-canvas');
+        const connectionSvg = document.getElementById('connection-svg');
+
+        const flowNodes = [];
+        const flowConnections = [];
+        let nodeIdCounter = 0;
+        let connectionIdCounter = 0;
+        let isConnecting = false;
+        let connectionStart = null;
+        let tempLine = null;
+
+        // Node templates configuration
+        const nodeConfig = {
+            'mission-trigger': { title: 'Mission Trigger', status: 'READY', statusClass: 'ready', desc: 'Launches the simulated search/survey sequence for the local room.', state: 'IDLE' },
+            'camera-intake': { title: 'Camera Intake', status: '3 FEEDS', statusClass: 'feeds', desc: 'Tracks the three phone feeds as visual context only. No CV analysis is performed.', state: 'IDLE' },
+            'swarm-assignment': { title: 'Swarm Assignment', status: '4 UNITS', statusClass: 'units', desc: 'Assigns simulated drones to sectors based on battery, spacing, and line of sight.', state: 'IDLE' },
+            'sector-planner': { title: 'Sector Planner', status: '6 ZONES', statusClass: 'zones', desc: 'Splits the survey region into fictional sectors for swarm coverage.', state: 'IDLE' },
+            'risk-check': { title: 'Risk Check', status: 'CAUTION', statusClass: 'caution', desc: 'Raises fictional signal/weather/battery warnings before the route can proceed.', state: 'IDLE' },
+            'route-simulation': { title: 'Route Simulation', status: '72% COV', statusClass: '', desc: 'Animates planned coverage progress across the simulated survey path.', state: 'IDLE' },
+            'report-summary': { title: 'Report Summary', status: 'REPORT', statusClass: 'report', desc: 'Summarizes simulated coverage, anomaly count, and unresolved warnings.', state: 'IDLE' }
+        };
+
+        // Open modal
+        missionUploadBtn.addEventListener('click', () => {
+            missionModal.classList.add('active');
+        });
+
+        // Close modal
+        function closeModal() {
+            missionModal.classList.remove('active');
+        }
+
+        modalCloseBtn.addEventListener('click', closeModal);
+        modalCancelBtn.addEventListener('click', closeModal);
+
+        // Close on background click
+        missionModal.addEventListener('click', (e) => {
+            if (e.target === missionModal) {
+                closeModal();
+            }
+        });
+
+        // Drag from palette to canvas
+        document.querySelectorAll('.node-template').forEach(template => {
+            template.addEventListener('click', (e) => {
+                const nodeType = template.dataset.nodeType;
+                const config = nodeConfig[nodeType];
+                createFlowNode(nodeType, config, 400 + Math.random() * 200, 200 + Math.random() * 200);
+            });
+        });
+
+        function createFlowNode(type, config, x, y) {
+            const nodeId = `node-${nodeIdCounter++}`;
+            const nodeEl = document.createElement('div');
+            nodeEl.className = 'flow-node';
+            nodeEl.id = nodeId;
+            nodeEl.style.left = x + 'px';
+            nodeEl.style.top = y + 'px';
+
+            nodeEl.innerHTML = `
+                <div class="flow-node-header">
+                    <span class="flow-node-status ${config.statusClass}">${config.status}</span>
+                    <span class="flow-node-title">${config.title}</span>
+                    <button class="flow-node-remove">&times;</button>
+                </div>
+                <div class="flow-node-body">
+                    <div class="flow-node-desc">${config.desc}</div>
+                    <div class="flow-node-state">${config.state}</div>
+                </div>
+                <div class="flow-node-port input"></div>
+                <div class="flow-node-port output"></div>
+            `;
+
+            flowchartCanvas.appendChild(nodeEl);
+
+            // Make draggable
+            const header = nodeEl.querySelector('.flow-node-header');
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('flow-node-remove')) return;
+                isDragging = true;
+                offsetX = e.clientX - nodeEl.offsetLeft;
+                offsetY = e.clientY - nodeEl.offsetTop;
+                nodeEl.classList.add('selected');
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    nodeEl.style.left = (e.clientX - offsetX) + 'px';
+                    nodeEl.style.top = (e.clientY - offsetY) + 'px';
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // Remove node
+            nodeEl.querySelector('.flow-node-remove').addEventListener('click', () => {
+                // Remove all connections involving this node
+                for (let i = flowConnections.length - 1; i >= 0; i--) {
+                    const conn = flowConnections[i];
+                    if (conn.fromId === nodeId || conn.toId === nodeId) {
+                        connectionSvg.removeChild(conn.line);
+                        flowConnections.splice(i, 1);
+                    }
+                }
+                flowchartCanvas.removeChild(nodeEl);
+                flowNodes.splice(flowNodes.findIndex(n => n.id === nodeId), 1);
+            });
+
+            // Add port click handlers for connections
+            const outputPort = nodeEl.querySelector('.flow-node-port.output');
+            const inputPort = nodeEl.querySelector('.flow-node-port.input');
+
+            outputPort.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                startConnection(nodeEl, outputPort, 'output');
+            });
+
+            inputPort.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                if (isConnecting && connectionStart) {
+                    completeConnection(nodeEl, inputPort, 'input');
+                }
+            });
+
+            flowNodes.push({ id: nodeId, type, element: nodeEl });
+        }
+
+        // ── Connection System ──
+        function getPortPosition(element, port) {
+            const canvasRect = flowchartCanvas.getBoundingClientRect();
+            const portRect = port.getBoundingClientRect();
+
+            return {
+                x: portRect.left + portRect.width / 2 - canvasRect.left + flowchartCanvas.scrollLeft,
+                y: portRect.top + portRect.height / 2 - canvasRect.top + flowchartCanvas.scrollTop
+            };
+        }
+
+        function createConnectionLine(x1, y1, x2, y2) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+            // Create curved path using cubic bezier
+            const dx = x2 - x1;
+            const curveOffset = Math.abs(dx) * 0.5;
+
+            const d = `M ${x1} ${y1} C ${x1 + curveOffset} ${y1}, ${x2 - curveOffset} ${y2}, ${x2} ${y2}`;
+
+            path.setAttribute('d', d);
+            path.setAttribute('class', 'connection-line');
+            path.setAttribute('stroke', 'rgba(68,144,255,0.6)');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('fill', 'none');
+
+            return path;
+        }
+
+        function startConnection(nodeEl, port, portType) {
+            isConnecting = true;
+            connectionStart = {
+                nodeEl,
+                port,
+                portType,
+                nodeId: nodeEl.id
+            };
+
+            // Create temporary line
+            const pos = getPortPosition(nodeEl, port);
+            tempLine = createConnectionLine(pos.x, pos.y, pos.x, pos.y);
+            connectionSvg.appendChild(tempLine);
+        }
+
+        function completeConnection(nodeEl, port, portType) {
+            if (!isConnecting || !connectionStart) return;
+
+            // Check if connecting output to input (correct direction)
+            if (connectionStart.portType === 'output' && portType === 'input') {
+                // Check if connection already exists
+                const alreadyConnected = flowConnections.some(conn =>
+                    conn.fromId === connectionStart.nodeId && conn.toId === nodeEl.id
+                );
+
+                if (!alreadyConnected && connectionStart.nodeId !== nodeEl.id) {
+                    // Create permanent connection
+                    const startPos = getPortPosition(connectionStart.nodeEl, connectionStart.port);
+                    const endPos = getPortPosition(nodeEl, port);
+
+                    const line = createConnectionLine(startPos.x, startPos.y, endPos.x, endPos.y);
+                    connectionSvg.appendChild(line);
+
+                    flowConnections.push({
+                        id: `conn-${connectionIdCounter++}`,
+                        fromId: connectionStart.nodeId,
+                        toId: nodeEl.id,
+                        fromPort: connectionStart.port,
+                        toPort: port,
+                        line: line
+                    });
+                }
+            }
+
+            // Clean up
+            if (tempLine) {
+                connectionSvg.removeChild(tempLine);
+                tempLine = null;
+            }
+            isConnecting = false;
+            connectionStart = null;
+        }
+
+        function updateConnections() {
+            // Update all connection line positions
+            for (const conn of flowConnections) {
+                const fromNode = flowNodes.find(n => n.id === conn.fromId);
+                const toNode = flowNodes.find(n => n.id === conn.toId);
+
+                if (fromNode && toNode) {
+                    const startPos = getPortPosition(fromNode.element, conn.fromPort);
+                    const endPos = getPortPosition(toNode.element, conn.toPort);
+
+                    const dx = endPos.x - startPos.x;
+                    const curveOffset = Math.abs(dx) * 0.5;
+
+                    const d = `M ${startPos.x} ${startPos.y} C ${startPos.x + curveOffset} ${startPos.y}, ${endPos.x - curveOffset} ${endPos.y}, ${endPos.x} ${endPos.y}`;
+                    conn.line.setAttribute('d', d);
+                }
+            }
+        }
+
+        // Mouse move handler for temporary connection line
+        flowchartCanvas.addEventListener('mousemove', (e) => {
+            if (isConnecting && tempLine && connectionStart) {
+                const canvasRect = flowchartCanvas.getBoundingClientRect();
+                const startPos = getPortPosition(connectionStart.nodeEl, connectionStart.port);
+                const endX = e.clientX - canvasRect.left + flowchartCanvas.scrollLeft;
+                const endY = e.clientY - canvasRect.top + flowchartCanvas.scrollTop;
+
+                const dx = endX - startPos.x;
+                const curveOffset = Math.abs(dx) * 0.5;
+
+                const d = `M ${startPos.x} ${startPos.y} C ${startPos.x + curveOffset} ${startPos.y}, ${endX - curveOffset} ${endY}, ${endX} ${endY}`;
+                tempLine.setAttribute('d', d);
+            }
+        });
+
+        // Cancel connection on click outside
+        flowchartCanvas.addEventListener('mousedown', (e) => {
+            if (isConnecting && e.target === flowchartCanvas) {
+                if (tempLine) {
+                    connectionSvg.removeChild(tempLine);
+                    tempLine = null;
+                }
+                isConnecting = false;
+                connectionStart = null;
+            }
+        });
+
+        // Update connections when nodes are dragged
+        const originalMouseMove = document.onmousemove;
+        document.addEventListener('mousemove', () => {
+            updateConnections();
+        });
+
+        // Execute mission based on flowchart
+        executeMissionBtn.addEventListener('click', () => {
+            console.log('Executing Kill Chain with', flowNodes.length, 'nodes and', flowConnections.length, 'connections');
+
+            // Build execution graph from connections
+            function getExecutionOrder() {
+                if (flowConnections.length === 0) {
+                    // No connections - use simple node detection
+                    return flowNodes.map(n => n.type);
+                }
+
+                // Find start nodes (nodes with no incoming connections)
+                const hasIncoming = new Set();
+                flowConnections.forEach(conn => hasIncoming.add(conn.toId));
+
+                const startNodes = flowNodes.filter(n => !hasIncoming.has(n.id));
+
+                // Traverse graph from start nodes
+                const executionOrder = [];
+                const visited = new Set();
+
+                function traverse(nodeId) {
+                    if (visited.has(nodeId)) return;
+                    visited.add(nodeId);
+
+                    const node = flowNodes.find(n => n.id === nodeId);
+                    if (node) {
+                        executionOrder.push(node.type);
+
+                        // Find all connected nodes
+                        const outgoing = flowConnections.filter(c => c.fromId === nodeId);
+                        outgoing.forEach(conn => traverse(conn.toId));
+                    }
+                }
+
+                startNodes.forEach(node => traverse(node.id));
+                return executionOrder;
+            }
+
+            const executionOrder = getExecutionOrder();
+            console.log('Execution order:', executionOrder);
+
+            // Execute nodes based on order
+            const hasMissionTrigger = executionOrder.includes('mission-trigger');
+            const hasRouteSimulation = executionOrder.includes('route-simulation');
+            const hasSwarmAssignment = executionOrder.includes('swarm-assignment');
+            const hasSectorPlanner = executionOrder.includes('sector-planner');
+            const hasRiskCheck = executionOrder.includes('risk-check');
+            const hasCameraIntake = executionOrder.includes('camera-intake');
+
+            // Formation selection based on nodes
+            if (hasRouteSimulation && hasSectorPlanner) {
+                // Grid for sector planning + route simulation
+                switchFormation('grid');
+            } else if (hasRouteSimulation) {
+                // Delta formation for route simulation
+                switchFormation('delta');
+            } else if (hasSwarmAssignment && hasMissionTrigger) {
+                // Swarm for basic swarm assignment
+                switchFormation('swarm');
+            } else if (hasSectorPlanner) {
+                // Perimeter for sector planning
+                switchFormation('perimeter');
+            } else if (flowNodes.length > 0) {
+                // Random formation
+                const formationKeys = Object.keys(formations);
+                const randomFormation = formationKeys[Math.floor(Math.random() * formationKeys.length)];
+                switchFormation(randomFormation);
+            }
+
+            // Environment selection based on nodes
+            if (hasRiskCheck) {
+                // Volcanic for high-risk missions
+                switchEnvironment('volcanic');
+            } else if (hasCameraIntake) {
+                // Arctic for camera surveillance (clear visibility)
+                switchEnvironment('arctic');
+            } else if (hasSwarmAssignment) {
+                // Desert for swarm operations
+                switchEnvironment('desert');
+            } else if (flowNodes.length > 0) {
+                // Random environment
+                const envKeys = Object.keys(environments);
+                const randomEnv = envKeys[Math.floor(Math.random() * envKeys.length)];
+                switchEnvironment(randomEnv);
+            }
+
+            // Trigger attack if we have nodes
+            if (flowNodes.length > 0) {
+                const randomX = (Math.random() - 0.5) * 200;
+                const randomZ = (Math.random() - 0.5) * 200;
+                const randomY = terrainHeight(randomX, randomZ);
+
+                attackTarget = new THREE.Vector3(randomX, randomY, randomZ);
+                isAttacking = true;
+                targetMarker.position.set(randomX, randomY + 0.5, randomZ);
+                targetMarker.visible = true;
+                targetRing.position.set(randomX, randomY + 1, randomZ);
+                targetRing.visible = true;
+                ammoCount = maxAmmo;
+            }
+
+            // Reset simulation
+            resetSimulation();
+
+            // Close modal
+            closeModal();
+
+            console.log('Mission execution started from flowchart');
         });
 
         // ── Resize ──
