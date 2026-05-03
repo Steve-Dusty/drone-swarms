@@ -97,6 +97,155 @@
             background: linear-gradient(90deg, #ff4444, #ff0000);
         }
 
+        #swarm-mode-toggle {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 8px;
+            padding: 12px 20px;
+            z-index: 25;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .mode-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.6);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.9);
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, rgba(68,144,255,0.3), rgba(68,100,255,0.3));
+            border-color: rgba(68,144,255,0.6);
+            color: #fff;
+        }
+
+        .mode-btn.dumb {
+            background: rgba(255,68,68,0.2);
+            border-color: rgba(255,68,68,0.4);
+        }
+
+        .mode-btn.dumb.active {
+            background: linear-gradient(135deg, rgba(255,68,68,0.3), rgba(255,40,40,0.3));
+            border-color: rgba(255,68,68,0.6);
+        }
+
+        .mode-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.5);
+        }
+
+        #mode-outcome {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.72);
+            letter-spacing: 0.04em;
+        }
+
+        #mode-outcome strong {
+            color: #fff;
+        }
+
+        #foundry-panel {
+            position: fixed;
+            right: 24px;
+            bottom: 180px;
+            width: 240px;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 8px;
+            padding: 14px 16px;
+            z-index: 20;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            color: #fff;
+        }
+
+        #foundry-panel h3 {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.55);
+            margin-bottom: 10px;
+        }
+
+        .foundry-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.78rem;
+            margin-bottom: 6px;
+        }
+
+        .foundry-key {
+            color: rgba(255,255,255,0.55);
+        }
+
+        .foundry-value {
+            color: #fff;
+            text-align: right;
+        }
+
+        .foundry-value.ok {
+            color: #44ff90;
+        }
+
+        .foundry-value.warn {
+            color: #ffaa00;
+        }
+
+        .foundry-value.error {
+            color: #ff6666;
+        }
+
+        #foundry-toggle-btn {
+            width: 100%;
+            margin-top: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.16);
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all 0.2s ease;
+        }
+
+        #foundry-toggle-btn:hover {
+            background: rgba(255,255,255,0.12);
+        }
+
+        #foundry-toggle-btn.paused {
+            background: rgba(255,170,0,0.18);
+            border-color: rgba(255,170,0,0.35);
+            color: #ffd27a;
+        }
+
         #metrics-panel {
             position: fixed;
             bottom: 20px;
@@ -175,6 +324,92 @@
         #mission-upload-btn:hover {
             background: rgba(68,144,255,0.3);
             border-color: rgba(68,144,255,0.6);
+        }
+
+        #voice-mission-btn {
+            background: rgba(68,255,144,0.16);
+            border: 1px solid rgba(68,255,144,0.32);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+            align-self: center;
+        }
+
+        #voice-mission-btn:hover {
+            background: rgba(68,255,144,0.24);
+            border-color: rgba(68,255,144,0.5);
+        }
+
+        #voice-mission-btn.listening {
+            background: rgba(255,68,68,0.2);
+            border-color: rgba(255,68,68,0.45);
+            color: #ffd6d6;
+            animation: pulseRecord 1.2s ease-in-out infinite;
+        }
+
+        #voice-mission-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        @keyframes pulseRecord {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,68,68,0.2); }
+            50% { box-shadow: 0 0 0 8px rgba(255,68,68,0.0); }
+        }
+
+        #voice-briefing {
+            position: fixed;
+            top: 92px;
+            left: 24px;
+            width: 360px;
+            background: rgba(10, 10, 15, 0.84);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            z-index: 15;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.28);
+        }
+
+        #voice-briefing h3 {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.55);
+            margin-bottom: 8px;
+        }
+
+        #voice-status {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 8px;
+        }
+
+        #voice-status.live {
+            color: #7dffc0;
+        }
+
+        #voice-status.error {
+            color: #ff8f8f;
+        }
+
+        #voice-transcript {
+            font-size: 0.82rem;
+            line-height: 1.45;
+            color: rgba(255,255,255,0.95);
+            min-height: 72px;
+        }
+
+        #voice-transcript.empty {
+            color: rgba(255,255,255,0.42);
         }
 
         #mission-modal {
@@ -786,6 +1021,13 @@
         </div>
     </div>
 
+    <div id="swarm-mode-toggle">
+        <div class="mode-label">Comparison Run</div>
+        <button class="mode-btn dumb" data-mode="dumb">Dumb Swarm</button>
+        <button class="mode-btn active" data-mode="smart">SplatSwarm</button>
+        <div id="mode-outcome">Expected losses: <strong>1</strong></div>
+    </div>
+
     <div id="environment-panel">
         <h3>Environment</h3>
         <div class="env-option active" data-env="alpine">
@@ -851,8 +1093,24 @@
             <div class="metric-label">Shots Fired</div>
             <div class="metric-value" id="shots-fired">0</div>
         </div>
+        <button id="voice-mission-btn">Start Voice Mission</button>
         <button id="mission-upload-btn">Upload Mission / Kill Chain</button>
         <button id="reset-btn">Reset Simulation</button>
+    </div>
+
+    <div id="voice-briefing">
+        <h3>Voice Mission</h3>
+        <div id="voice-status">Waiting for mission input.</div>
+        <div id="voice-transcript" class="empty">Click "Start Voice Mission" and say something like: "Scout the northern ridge, avoid SAM coverage, engage only after approval."</div>
+    </div>
+
+    <div id="foundry-panel">
+        <h3>Foundry Stream</h3>
+        <div class="foundry-row"><span class="foundry-key">Status</span><span class="foundry-value warn" id="foundry-status">Checking...</span></div>
+        <div class="foundry-row"><span class="foundry-key">Mission</span><span class="foundry-value" id="foundry-mission">Not started</span></div>
+        <div class="foundry-row"><span class="foundry-key">Telemetry</span><span class="foundry-value" id="foundry-telemetry">0 batches</span></div>
+        <div class="foundry-row"><span class="foundry-key">Audit Log</span><span class="foundry-value" id="foundry-audit">0 events</span></div>
+        <button id="foundry-toggle-btn" type="button">Pause Foundry Writes</button>
     </div>
 
     <div id="mission-modal">
@@ -1101,8 +1359,18 @@
                     const radius = attackPos ? 20 : 25;
                     const x = swarmCenter.x + Math.sin(elapsed * 0.8 + offset) * radius + Math.cos(elapsed * 1.2 + offset) * (radius * 0.6);
                     const z = swarmCenter.z + Math.cos(elapsed * 0.8 + offset) * radius + Math.sin(elapsed * 1.2 + offset) * (radius * 0.6);
-                    const baseHeight = attackPos ? attackPos.y + 25 : 40;
-                    const y = baseHeight + Math.sin(elapsed * 0.9 + offset) * 12;
+
+                    let y;
+                    if (swarmMode === 'smart' && useTerrainMasking) {
+                        // TERRAIN-AWARE: Hug terrain, seek low ground
+                        const terrainH = terrainHeight(x, z);
+                        const clearance = 15 + Math.sin(elapsed * 0.9 + offset) * 5; // 10-20m above terrain
+                        y = terrainH + clearance;
+                    } else {
+                        // DUMB MODE: Fixed altitude, ignores terrain
+                        const baseHeight = attackPos ? attackPos.y + 25 : 40;
+                        y = baseHeight + Math.sin(elapsed * 0.9 + offset) * 12;
+                    }
 
                     return { x, y, z };
                 }
@@ -1114,14 +1382,9 @@
                     const formationSpeed = elapsed * 0.4;
                     const centerX = attackPos ? attackPos.x : Math.sin(formationSpeed) * 80;
                     const centerZ = attackPos ? attackPos.z : Math.cos(formationSpeed) * 80;
-                    const centerY = attackPos ? attackPos.y + 30 : 45;
 
-                    if (droneIndex === 0) {
-                        return { x: centerX, y: centerY, z: centerZ };
-                    }
-
-                    const side = droneIndex % 2 === 0 ? 1 : -1;
-                    const row = Math.floor(droneIndex / 2);
+                    const side = droneIndex === 0 ? 0 : (droneIndex % 2 === 0 ? 1 : -1);
+                    const row = droneIndex === 0 ? 0 : Math.floor(droneIndex / 2);
                     const spacing = 15;
 
                     const angle = attackPos ? 0 : Math.atan2(Math.cos(formationSpeed), Math.sin(formationSpeed));
@@ -1131,7 +1394,18 @@
 
                     const x = centerX + offsetX + (attackPos ? 0 : back * Math.sin(formationSpeed));
                     const z = centerZ + offsetZ + (attackPos ? 0 : back * Math.cos(formationSpeed));
-                    const y = centerY - row * 2;
+
+                    let y;
+                    if (swarmMode === 'smart' && useTerrainMasking) {
+                        // TERRAIN-AWARE: Follow terrain contours
+                        const terrainH = terrainHeight(x, z);
+                        const clearance = 20 + row * 3; // Staggered altitude for formation depth
+                        y = terrainH + clearance;
+                    } else {
+                        // DUMB MODE: Fixed altitude formation
+                        const centerY = attackPos ? attackPos.y + 30 : 45;
+                        y = centerY - row * 2;
+                    }
 
                     return { x, y, z };
                 }
@@ -1213,6 +1487,445 @@
 
         let currentFormation = 'swarm';
 
+        // ── Swarm Mode ──
+        const swarmProfiles = {
+            dumb: {
+                label: 'DUMB SWARM',
+                expectedLosses: 7,
+                cruiseSpeed: 64,
+                pathClearance: 52,
+                formationClearance: 48,
+                lineColor: 0xff5555,
+                samCooldown: 0.85,
+                hitChance: 0.88,
+                exposurePadding: 9
+            },
+            smart: {
+                label: 'SPLATSWARM',
+                expectedLosses: 1,
+                cruiseSpeed: 52,
+                pathClearance: 16,
+                formationClearance: 14,
+                lineColor: 0x55d8ff,
+                samCooldown: 1.5,
+                hitChance: 0.35,
+                exposurePadding: 3
+            }
+        };
+        let swarmMode = 'smart'; // 'smart' or 'dumb'
+        let useTerrainMasking = true;
+        const demoObjective = 'Terrain-aware autonomous drone strike demonstrating valley-cover routing versus naive straight-line flight.';
+        const foundryState = {
+            configured: false,
+            enabled: false,
+            telemetryBatches: 0,
+            auditEvents: 0,
+            lastError: '',
+        };
+        const currentMission = {
+            id: null,
+            objective: demoObjective,
+            status: 'PLANNING',
+            startedAt: null,
+        };
+        const voiceMissionBtn = document.getElementById('voice-mission-btn');
+        const voiceStatusEl = document.getElementById('voice-status');
+        const voiceTranscriptEl = document.getElementById('voice-transcript');
+        const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let voiceRecognition = null;
+        let isVoiceListening = false;
+        let pendingTranscript = '';
+
+        function setVoiceUi(statusText, transcript = null, tone = '') {
+            voiceStatusEl.textContent = statusText;
+            voiceStatusEl.classList.remove('live', 'error');
+            if (tone) voiceStatusEl.classList.add(tone);
+
+            if (transcript !== null) {
+                voiceTranscriptEl.textContent = transcript;
+                voiceTranscriptEl.classList.toggle('empty', !transcript.trim());
+            }
+
+            voiceMissionBtn.classList.toggle('listening', isVoiceListening);
+            voiceMissionBtn.textContent = isVoiceListening ? 'Listening...' : 'Start Voice Mission';
+        }
+
+        function updateFoundryPanel() {
+            const statusEl = document.getElementById('foundry-status');
+            const missionEl = document.getElementById('foundry-mission');
+            const telemetryEl = document.getElementById('foundry-telemetry');
+            const auditEl = document.getElementById('foundry-audit');
+            const toggleBtn = document.getElementById('foundry-toggle-btn');
+
+            statusEl.className = 'foundry-value';
+            if (!foundryState.enabled) {
+                statusEl.textContent = 'Paused';
+                statusEl.classList.add('warn');
+            } else if (foundryState.configured) {
+                statusEl.textContent = foundryState.lastError ? 'Degraded' : 'Live';
+                statusEl.classList.add(foundryState.lastError ? 'warn' : 'ok');
+            } else {
+                statusEl.textContent = 'Offline';
+                statusEl.classList.add(foundryState.lastError ? 'error' : 'warn');
+            }
+
+            missionEl.textContent = currentMission.id ? `${currentMission.status} · ${currentMission.id.slice(-8)}` : 'Not started';
+            telemetryEl.textContent = `${foundryState.telemetryBatches} batches`;
+            auditEl.textContent = `${foundryState.auditEvents} events`;
+            toggleBtn.textContent = foundryState.enabled ? 'Pause Foundry Writes' : 'Start Foundry Writes';
+            toggleBtn.classList.toggle('paused', !foundryState.enabled);
+        }
+
+        async function postFoundry(path, payload) {
+            if (!foundryState.enabled) {
+                return null;
+            }
+            try {
+                const response = await fetch(path, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (!response.ok || data.ok === false) {
+                    throw new Error(data.error || `Request failed for ${path}`);
+                }
+                foundryState.lastError = '';
+                return data;
+            } catch (error) {
+                foundryState.lastError = error.message;
+                console.warn('Foundry logging error:', error);
+                updateFoundryPanel();
+                return null;
+            }
+        }
+
+        async function checkFoundryHealth() {
+            try {
+                const response = await fetch('/api/foundry/health');
+                const data = await response.json();
+                foundryState.configured = Boolean(data.configured);
+                foundryState.lastError = '';
+            } catch (error) {
+                foundryState.configured = false;
+                foundryState.lastError = error.message;
+            }
+            updateFoundryPanel();
+        }
+
+        function makeId(prefix) {
+            return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        }
+
+        document.getElementById('foundry-toggle-btn').addEventListener('click', () => {
+            foundryState.enabled = !foundryState.enabled;
+            foundryState.lastError = '';
+            updateFoundryPanel();
+        });
+
+        function clearFlowchart() {
+            for (let i = flowNodes.length - 1; i >= 0; i--) {
+                const node = flowNodes[i];
+                flowchartCanvas.removeChild(node.element);
+            }
+            flowNodes.length = 0;
+
+            for (let i = flowConnections.length - 1; i >= 0; i--) {
+                connectionSvg.removeChild(flowConnections[i].line);
+            }
+            flowConnections.length = 0;
+        }
+
+        function buildFlowchartFromNodes(nodes) {
+            clearFlowchart();
+
+            let yOffset = 150;
+            for (const nodeType of nodes) {
+                const config = nodeConfig[nodeType];
+                if (!config) continue;
+                createFlowNode(nodeType, config, 450, yOffset);
+                yOffset += 120;
+            }
+
+            setTimeout(() => {
+                for (let i = 0; i < nodes.length - 1; i++) {
+                    const fromNode = flowNodes.find(n => n.type === nodes[i]);
+                    const toNode = flowNodes.find(n => n.type === nodes[i + 1]);
+                    if (!fromNode || !toNode) continue;
+
+                    const fromPort = fromNode.element.querySelector('.flow-node-port.output');
+                    const toPort = toNode.element.querySelector('.flow-node-port.input');
+                    const startPos = getPortPosition(fromNode.element, fromPort);
+                    const endPos = getPortPosition(toNode.element, toPort);
+                    const line = createConnectionLine(startPos.x, startPos.y, endPos.x, endPos.y);
+                    connectionSvg.appendChild(line);
+                    flowConnections.push({
+                        id: `conn-${connectionIdCounter++}`,
+                        fromId: fromNode.id,
+                        toId: toNode.id,
+                        fromPort,
+                        toPort,
+                        line
+                    });
+                }
+            }, 100);
+        }
+
+        async function generateKillChainFromObjective(objective) {
+            const response = await fetch('/api/generate-killchain', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ objective })
+            });
+            const data = await response.json();
+            if (!response.ok || data.error) {
+                throw new Error(data.error || 'Failed to generate kill chain');
+            }
+            return {
+                nodes: data.nodes || [],
+                plan: data.plan || {}
+            };
+        }
+
+        function deriveTargetFromObjective(objective, plan = {}) {
+            if (plan.target && Number.isFinite(plan.target.x) && Number.isFinite(plan.target.z)) {
+                const x = THREE.MathUtils.clamp(plan.target.x, -220, 220);
+                const z = THREE.MathUtils.clamp(plan.target.z, -220, 220);
+                return new THREE.Vector3(x, sampleTerrainHeight(x, z), z);
+            }
+
+            const text = objective.toLowerCase();
+            let x = 0;
+            let z = 0;
+
+            if (text.includes('north')) z -= 140;
+            if (text.includes('south')) z += 140;
+            if (text.includes('east')) x += 140;
+            if (text.includes('west')) x -= 140;
+            if (text.includes('center') || text.includes('central')) {
+                x *= 0.4;
+                z *= 0.4;
+            }
+            if (text.includes('ridge')) {
+                x += text.includes('east') ? 35 : text.includes('west') ? -35 : 20;
+                z += text.includes('north') ? -25 : text.includes('south') ? 25 : -15;
+            }
+            if (text.includes('valley') || text.includes('floor')) {
+                x *= 0.5;
+                z *= 0.5;
+            }
+            if (text.includes('sam')) {
+                x -= 30;
+                z += 20;
+            }
+
+            x = THREE.MathUtils.clamp(x || 30, -220, 220);
+            z = THREE.MathUtils.clamp(z || -40, -220, 220);
+            const y = sampleTerrainHeight(x, z);
+            return new THREE.Vector3(x, y, z);
+        }
+
+        async function runObjectiveMission(objective, source = 'manual') {
+            currentMission.objective = objective.trim();
+            setVoiceUi(`Generating kill chain from ${source} mission...`, currentMission.objective, 'live');
+
+            const generated = await generateKillChainFromObjective(currentMission.objective);
+            const nodes = generated.nodes;
+            const plan = generated.plan || {};
+            buildFlowchartFromNodes(nodes);
+
+            if (plan.swarm_mode === 'smart' || currentMission.objective.toLowerCase().includes('avoid') || currentMission.objective.toLowerCase().includes('cover') || currentMission.objective.toLowerCase().includes('terrain')) {
+                swarmMode = 'smart';
+                useTerrainMasking = true;
+                refreshModeUi();
+            } else if (plan.swarm_mode === 'dumb') {
+                swarmMode = 'dumb';
+                useTerrainMasking = false;
+                refreshModeUi();
+            }
+
+            if (plan.environment && environments[plan.environment]) {
+                switchEnvironment(plan.environment);
+            }
+
+            if (plan.formation && formations[plan.formation]) {
+                switchFormation(plan.formation, { logEvent: false });
+            }
+
+            const target = deriveTargetFromObjective(currentMission.objective, plan);
+            plannedMissionTarget = target.clone();
+            configureMissionPath(target);
+            executeMissionBtn.click();
+            const targetLabel = plan.target?.label ? ` Target: ${plan.target.label}.` : '';
+            const reasoning = plan.reasoning ? ` ${plan.reasoning}` : '';
+            setVoiceUi(`Mission executing from ${source} input.${targetLabel}${reasoning}`, currentMission.objective, 'live');
+        }
+
+        function stopVoiceRecognition() {
+            if (!voiceRecognition || !isVoiceListening) return;
+            isVoiceListening = false;
+            voiceRecognition.stop();
+            setVoiceUi('Processing voice mission...', pendingTranscript || voiceTranscriptEl.textContent, 'live');
+        }
+
+        async function startVoiceMissionCapture() {
+            if (!SpeechRecognitionCtor) {
+                setVoiceUi('Voice recognition is not supported in this browser.', voiceTranscriptEl.textContent, 'error');
+                return;
+            }
+
+            if (isVoiceListening) {
+                stopVoiceRecognition();
+                return;
+            }
+
+            if (!voiceRecognition) {
+                voiceRecognition = new SpeechRecognitionCtor();
+                voiceRecognition.lang = 'en-US';
+                voiceRecognition.continuous = false;
+                voiceRecognition.interimResults = true;
+                voiceRecognition.maxAlternatives = 1;
+
+                voiceRecognition.onstart = () => {
+                    isVoiceListening = true;
+                    pendingTranscript = '';
+                    setVoiceUi('Listening for mission intent...', '', 'live');
+                };
+
+                voiceRecognition.onresult = (event) => {
+                    let transcript = '';
+                    let finalText = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const text = event.results[i][0].transcript;
+                        transcript += text;
+                        if (event.results[i].isFinal) {
+                            finalText += text;
+                        }
+                    }
+                    pendingTranscript = (finalText || transcript).trim();
+                    setVoiceUi('Transcribing mission...', pendingTranscript || transcript.trim(), 'live');
+                };
+
+                voiceRecognition.onerror = (event) => {
+                    isVoiceListening = false;
+                    setVoiceUi(`Voice error: ${event.error}`, pendingTranscript || voiceTranscriptEl.textContent, 'error');
+                };
+
+                voiceRecognition.onend = async () => {
+                    const transcript = (pendingTranscript || '').trim();
+                    isVoiceListening = false;
+                    if (!transcript) {
+                        setVoiceUi('No mission heard. Try again.', '', 'error');
+                        return;
+                    }
+
+                    try {
+                        await runObjectiveMission(transcript, 'voice');
+                    } catch (error) {
+                        setVoiceUi(`Voice mission failed: ${error.message}`, transcript, 'error');
+                    }
+                };
+            }
+
+            voiceRecognition.start();
+        }
+
+        voiceMissionBtn.addEventListener('click', startVoiceMissionCapture);
+        if (!SpeechRecognitionCtor) {
+            voiceMissionBtn.disabled = true;
+            setVoiceUi('Voice mission unsupported in this browser. Use Chrome or Edge.', voiceTranscriptEl.textContent, 'error');
+        }
+
+        async function createMissionRecord(reason = 'mission-start') {
+            currentMission.id = makeId('mission');
+            currentMission.status = 'EXECUTING';
+            currentMission.startedAt = new Date().toISOString();
+            updateFoundryPanel();
+
+            if (!foundryState.configured) {
+                return;
+            }
+
+            await postFoundry('/api/foundry/mission', {
+                id: currentMission.id,
+                objective: `${currentMission.objective} Mode: ${swarmProfiles[swarmMode].label}. Trigger: ${reason}.`,
+                status: currentMission.status,
+                created_at: currentMission.startedAt
+            });
+            updateFoundryPanel();
+        }
+
+        async function logKillChainEvent(nodeName, confidence = 1, actionTaken = 'APPROVED') {
+            if (!currentMission.id || !foundryState.configured) return;
+
+            const result = await postFoundry('/api/foundry/killchain-event', {
+                id: makeId('event'),
+                mission_id: currentMission.id,
+                node_name: nodeName,
+                approved_by: 'operator',
+                timestamp: new Date().toISOString(),
+                confidence_score: confidence,
+                action_taken: actionTaken
+            });
+
+            if (result) {
+                foundryState.auditEvents++;
+                updateFoundryPanel();
+            }
+        }
+
+        async function logDroneLost(drone) {
+            if (!currentMission.id || !foundryState.configured) return;
+            if (drone.userData.loggedLostMissionId === currentMission.id) return;
+
+            drone.userData.loggedLostMissionId = currentMission.id;
+            await postFoundry('/api/foundry/drone-lost', {
+                drone_id: drone.userData.foundryId || `drone-${drone.userData.formationIndex}`,
+                mission_id: currentMission.id
+            });
+        }
+
+        let lastTelemetrySync = 0;
+        const telemetrySyncIntervalSec = 3;
+
+        async function syncDroneTelemetry(elapsed) {
+            if (!currentMission.id || !foundryState.configured) return;
+            if (elapsed - lastTelemetrySync < telemetrySyncIntervalSec) return;
+            lastTelemetrySync = elapsed;
+
+            const missionElapsed = Math.max(0, Date.now() / 1000 - missionStartClock);
+            const dronesPayload = drones.map(drone => {
+                const batteryPct = Math.max(8, 100 - missionElapsed * 2.8 - (drone.userData.formationIndex || 0) * 1.2);
+                drone.userData.battery = batteryPct;
+
+                return {
+                    drone_id: drone.userData.foundryId || `drone-${drone.userData.formationIndex}`,
+                    mission_id: currentMission.id,
+                    position_x: Number(drone.position.x.toFixed(2)),
+                    position_y: Number(drone.position.y.toFixed(2)),
+                    position_z: Number(drone.position.z.toFixed(2)),
+                    battery_pct: Number(batteryPct.toFixed(2)),
+                    status: drone.userData.destroyed ? 'LOST' : 'ACTIVE',
+                    formation: formations[currentFormation]?.name || currentFormation
+                };
+            });
+
+            const result = await postFoundry('/api/foundry/telemetry', { drones: dronesPayload });
+            if (result) {
+                foundryState.telemetryBatches++;
+                updateFoundryPanel();
+            }
+        }
+
+        async function startMissionRun(reason = 'manual-run') {
+            await createMissionRecord(reason);
+            if (reason === 'mode-switch') {
+                await logKillChainEvent(`Mode Switch - ${swarmProfiles[swarmMode].label}`, 0.98, 'COMMAND');
+            } else {
+                await logKillChainEvent('Mission Trigger', 0.95, 'MISSION_START');
+            }
+        }
+
         // ── Scene ──
         const scene = new THREE.Scene();
         const skyColor = environments[currentEnv].skyColor;
@@ -1263,6 +1976,8 @@
         scene.add(ambient);
 
         // ── Terrain noise ──
+        let activeTerrainScale = env.terrainScale;
+
         function terrainHeight(x, z, scale = 1.0) {
             let h = 0;
             h += Math.sin(x * 0.015 + 0.5) * Math.cos(z * 0.015 + 0.8) * 35 * scale;
@@ -1271,6 +1986,30 @@
             h += Math.sin(x * 0.15) * Math.cos(z * 0.12) * 4 * scale;
             h += Math.sin(x * 0.3 + 2.0) * Math.cos(z * 0.25 + 1.0) * 2 * scale;
             return h;
+        }
+
+        function sampleTerrainHeight(x, z) {
+            return terrainHeight(x, z, activeTerrainScale);
+        }
+
+        function terrainSlope(x, z) {
+            const step = 8;
+            const dx = sampleTerrainHeight(x + step, z) - sampleTerrainHeight(x - step, z);
+            const dz = sampleTerrainHeight(x, z + step) - sampleTerrainHeight(x, z - step);
+            return Math.sqrt(dx * dx + dz * dz) / (step * 2);
+        }
+
+        function hasTerrainLineOfSight(from, to, sampleCount = 24, padding = 2) {
+            for (let i = 1; i < sampleCount; i++) {
+                const t = i / sampleCount;
+                const x = THREE.MathUtils.lerp(from.x, to.x, t);
+                const y = THREE.MathUtils.lerp(from.y, to.y, t);
+                const z = THREE.MathUtils.lerp(from.z, to.z, t);
+                if (sampleTerrainHeight(x, z) > y - padding) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         // ── Build terrain mesh ──
@@ -1341,7 +2080,7 @@
             if (intersectPoint) {
                 targetPosition.copy(intersectPoint);
                 // Keep altitude at a reasonable height
-                const th = terrainHeight(intersectPoint.x, intersectPoint.z);
+                const th = sampleTerrainHeight(intersectPoint.x, intersectPoint.z);
                 targetPosition.y = Math.max(th + 30, 40);
             }
         });
@@ -1363,10 +2102,271 @@
         let shotsFired = 0;
         let timeToTarget = 0;
         let coverageArea = 0;
+        const defaultMissionStart = new THREE.Vector3(-220, 0, -190);
+        const defaultMissionTarget = new THREE.Vector3(170, 0, 130);
+        let activeMissionTarget = defaultMissionTarget.clone();
+        let plannedMissionTarget = null;
+        let currentMissionPath = [];
+        let missionPathSegments = [];
+        let missionPathLength = 1;
+        let routeLine = null;
+        let missionStartClock = 0;
+
+        function rebuildMissionSegments() {
+            missionPathSegments = [];
+            missionPathLength = 0;
+
+            for (let i = 0; i < currentMissionPath.length - 1; i++) {
+                const start = currentMissionPath[i];
+                const end = currentMissionPath[i + 1];
+                const length = start.distanceTo(end);
+
+                missionPathSegments.push({
+                    start,
+                    end,
+                    length
+                });
+                missionPathLength += length;
+            }
+
+            missionPathLength = Math.max(missionPathLength, 1);
+        }
+
+        function updateRouteLine() {
+            if (routeLine) {
+                scene.remove(routeLine);
+                routeLine.geometry.dispose();
+                routeLine.material.dispose();
+                routeLine = null;
+            }
+
+            if (currentMissionPath.length < 2) return;
+
+            const routeGeo = new THREE.BufferGeometry().setFromPoints(currentMissionPath);
+            const routeMat = new THREE.LineBasicMaterial({
+                color: swarmProfiles[swarmMode].lineColor,
+                transparent: true,
+                opacity: 0.75
+            });
+            routeLine = new THREE.Line(routeGeo, routeMat);
+            scene.add(routeLine);
+        }
+
+        function setMissionPath(points) {
+            currentMissionPath = points;
+            rebuildMissionSegments();
+            updateRouteLine();
+        }
+
+        function sampleMissionPoint(distance, lateralOffset = 0, verticalOffset = 0) {
+            if (!missionPathSegments.length) {
+                const th = sampleTerrainHeight(defaultMissionStart.x, defaultMissionStart.z);
+                return {
+                    position: new THREE.Vector3(defaultMissionStart.x, th + 20, defaultMissionStart.z),
+                    tangent: new THREE.Vector3(1, 0, 0)
+                };
+            }
+
+            let remaining = THREE.MathUtils.clamp(distance, 0, missionPathLength);
+            let segment = missionPathSegments[missionPathSegments.length - 1];
+
+            for (const current of missionPathSegments) {
+                if (remaining <= current.length) {
+                    segment = current;
+                    break;
+                }
+                remaining -= current.length;
+            }
+
+            const t = segment.length > 0 ? remaining / segment.length : 0;
+            const position = new THREE.Vector3().lerpVectors(segment.start, segment.end, t);
+            const tangent = new THREE.Vector3().subVectors(segment.end, segment.start).normalize();
+            const lateral = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+
+            position.addScaledVector(lateral, lateralOffset);
+            if (swarmMode === 'smart') {
+                position.y = sampleTerrainHeight(position.x, position.z) + swarmProfiles.smart.formationClearance + verticalOffset;
+            } else {
+                position.y += verticalOffset;
+            }
+
+            return { position, tangent };
+        }
+
+        function simplifyPath(path) {
+            if (path.length <= 2) return path;
+
+            const simplified = [path[0]];
+            for (let i = 1; i < path.length - 1; i++) {
+                const prev = simplified[simplified.length - 1];
+                const curr = path[i];
+                const next = path[i + 1];
+                const v1 = new THREE.Vector2(curr.x - prev.x, curr.z - prev.z).normalize();
+                const v2 = new THREE.Vector2(next.x - curr.x, next.z - curr.z).normalize();
+                if (v1.dot(v2) < 0.995) {
+                    simplified.push(curr);
+                }
+            }
+            simplified.push(path[path.length - 1]);
+            return simplified;
+        }
+
+        function buildStraightPath(start, target) {
+            const altitude = Math.max(sampleTerrainHeight(start.x, start.z), sampleTerrainHeight(target.x, target.z)) + swarmProfiles.dumb.pathClearance;
+            return [
+                new THREE.Vector3(start.x, altitude, start.z),
+                new THREE.Vector3(target.x, altitude, target.z)
+            ];
+        }
+
+        function buildTerrainAwarePath(start, target) {
+            const cellSize = 20;
+            const halfGrid = 15;
+            const originX = (start.x + target.x) / 2 - halfGrid * cellSize;
+            const originZ = (start.z + target.z) / 2 - halfGrid * cellSize;
+            const gridSize = halfGrid * 2 + 1;
+            const keyFor = (ix, iz) => `${ix},${iz}`;
+            const worldFor = (ix, iz) => ({
+                x: originX + ix * cellSize,
+                z: originZ + iz * cellSize
+            });
+            const clampIndex = value => THREE.MathUtils.clamp(Math.round(value), 0, gridSize - 1);
+            const startIndex = {
+                x: clampIndex((start.x - originX) / cellSize),
+                z: clampIndex((start.z - originZ) / cellSize)
+            };
+            const targetIndex = {
+                x: clampIndex((target.x - originX) / cellSize),
+                z: clampIndex((target.z - originZ) / cellSize)
+            };
+            const open = [startIndex];
+            const gScore = new Map([[keyFor(startIndex.x, startIndex.z), 0]]);
+            const fScore = new Map();
+            const cameFrom = new Map();
+            const heuristic = (ix, iz) => {
+                const dx = targetIndex.x - ix;
+                const dz = targetIndex.z - iz;
+                return Math.sqrt(dx * dx + dz * dz);
+            };
+            fScore.set(keyFor(startIndex.x, startIndex.z), heuristic(startIndex.x, startIndex.z));
+
+            while (open.length) {
+                open.sort((a, b) => fScore.get(keyFor(a.x, a.z)) - fScore.get(keyFor(b.x, b.z)));
+                const current = open.shift();
+                const currentKey = keyFor(current.x, current.z);
+
+                if (current.x === targetIndex.x && current.z === targetIndex.z) {
+                    const path = [];
+                    let cursorKey = currentKey;
+                    while (cursorKey) {
+                        const [ix, iz] = cursorKey.split(',').map(Number);
+                        const world = worldFor(ix, iz);
+                        path.push(new THREE.Vector3(world.x, 0, world.z));
+                        cursorKey = cameFrom.get(cursorKey);
+                    }
+                    path.reverse();
+                    const simplified = simplifyPath(path).map(point => {
+                        point.y = sampleTerrainHeight(point.x, point.z) + swarmProfiles.smart.pathClearance;
+                        return point;
+                    });
+                    simplified[0] = new THREE.Vector3(start.x, sampleTerrainHeight(start.x, start.z) + swarmProfiles.smart.pathClearance, start.z);
+                    simplified[simplified.length - 1] = new THREE.Vector3(target.x, sampleTerrainHeight(target.x, target.z) + swarmProfiles.smart.pathClearance, target.z);
+                    return simplified;
+                }
+
+                for (let dz = -1; dz <= 1; dz++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        if (dx === 0 && dz === 0) continue;
+
+                        const nx = current.x + dx;
+                        const nz = current.z + dz;
+                        if (nx < 0 || nz < 0 || nx >= gridSize || nz >= gridSize) continue;
+
+                        const world = worldFor(nx, nz);
+                        const height = sampleTerrainHeight(world.x, world.z);
+                        const slopePenalty = terrainSlope(world.x, world.z) * 10;
+                        const heightPenalty = Math.max(0, height + 25) * 0.08;
+                        let exposurePenalty = 0;
+                        const probe = new THREE.Vector3(world.x, height + swarmProfiles.smart.pathClearance, world.z);
+
+                        for (const sam of samSites) {
+                            const dist = probe.distanceTo(sam.position);
+                            if (dist < sam.range * 1.2 && hasTerrainLineOfSight(sam.position, probe, 18, 5)) {
+                                exposurePenalty += (1 - dist / (sam.range * 1.2)) * 12;
+                            }
+                        }
+
+                        const stepCost = Math.hypot(dx, dz) * (1 + slopePenalty + heightPenalty + exposurePenalty);
+                        const neighborKey = keyFor(nx, nz);
+                        const tentativeG = gScore.get(currentKey) + stepCost;
+
+                        if (tentativeG < (gScore.get(neighborKey) ?? Infinity)) {
+                            cameFrom.set(neighborKey, currentKey);
+                            gScore.set(neighborKey, tentativeG);
+                            fScore.set(neighborKey, tentativeG + heuristic(nx, nz));
+
+                            if (!open.some(node => node.x === nx && node.z === nz)) {
+                                open.push({ x: nx, z: nz });
+                            }
+                        }
+                    }
+                }
+            }
+
+            return buildStraightPath(start, target);
+        }
+
+        function beginDroneKill(drone, elapsed) {
+            if (drone.userData.destroyed || drone.userData.dying) return;
+
+            drone.userData.dying = true;
+            drone.userData.destroyed = true;
+            drone.userData.deathTime = elapsed;
+            drone.userData.fallVelocity = new THREE.Vector3(
+                (Math.random() - 0.5) * 6,
+                -8 - Math.random() * 4,
+                (Math.random() - 0.5) * 6
+            );
+            drone.userData.spinVelocity = new THREE.Vector3(
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10
+            );
+            drone.userData.flashUntil = elapsed + 0.35;
+            dronesDestroyed++;
+            createExplosion(drone.position.clone());
+            logDroneLost(drone);
+        }
+
+        function refreshModeUi() {
+            document.querySelectorAll('.mode-btn').forEach(button => {
+                button.classList.toggle('active', button.dataset.mode === swarmMode);
+            });
+            document.getElementById('mode-outcome').innerHTML =
+                `Expected losses: <strong>${swarmProfiles[swarmMode].expectedLosses}</strong>`;
+        }
+
+        function configureMissionPath(targetPoint = null) {
+            activeMissionTarget = (targetPoint ? targetPoint.clone() : defaultMissionTarget.clone());
+            activeMissionTarget.y = sampleTerrainHeight(activeMissionTarget.x, activeMissionTarget.z);
+
+            const missionStart = defaultMissionStart.clone();
+            missionStart.y = sampleTerrainHeight(missionStart.x, missionStart.z);
+
+            const path = swarmMode === 'smart'
+                ? buildTerrainAwarePath(missionStart, activeMissionTarget)
+                : buildStraightPath(missionStart, activeMissionTarget);
+
+            setMissionPath(path);
+            targetMarker.position.set(activeMissionTarget.x, activeMissionTarget.y + 0.5, activeMissionTarget.z);
+            targetRing.position.set(activeMissionTarget.x, activeMissionTarget.y + 1, activeMissionTarget.z);
+        }
 
         // Reset simulation
         function resetSimulation() {
             missionStartTime = Date.now() / 1000;
+            missionStartClock = missionStartTime;
+            lastTelemetrySync = 0;
             dronesDestroyed = 0;
             shotsFired = 0;
             ammoCount = maxAmmo;
@@ -1390,21 +2390,40 @@
             for (const drone of drones) {
                 drone.visible = true;
                 drone.userData.destroyed = false;
+                drone.userData.dying = false;
                 drone.userData.health = 100;
                 drone.userData.jammed = false;
+                drone.userData.flashUntil = 0;
+                drone.userData.loggedLostMissionId = null;
+
+                const laneIndex = drone.userData.formationIndex ?? 0;
+                const lane = laneIndex - (DRONE_COUNT - 1) * 0.5;
+                const spawn = sampleMissionPoint(0, lane * 8, 0);
+                drone.position.copy(spawn.position);
+                drone.position.y += laneIndex % 2 === 0 ? 1.5 : -1.5;
+                drone.rotation.set(0, Math.atan2(spawn.tangent.x, spawn.tangent.z), 0);
             }
 
             // Reset SAM fire times
             for (const sam of samSites) {
                 sam.lastFireTime = 0;
+                sam.fireCount = 0;
             }
         }
 
-        document.getElementById('reset-btn').addEventListener('click', resetSimulation);
+        document.getElementById('reset-btn').addEventListener('click', async () => {
+            configureMissionPath(attackTarget || activeMissionTarget);
+            resetSimulation();
+            attackTarget = activeMissionTarget.clone();
+            isAttacking = true;
+            targetMarker.visible = true;
+            targetRing.visible = true;
+            await startMissionRun('reset');
+        });
 
         // Create SAM sites (Surface-to-Air Missile)
         function createSAMSite(x, z) {
-            const th = terrainHeight(x, z);
+            const th = sampleTerrainHeight(x, z);
 
             // Base platform
             const baseGeo = new THREE.CylinderGeometry(4, 5, 2, 8);
@@ -1458,7 +2477,7 @@
 
         // Create jammer sites (Electronic Warfare)
         function createJammer(x, z) {
-            const th = terrainHeight(x, z);
+            const th = sampleTerrainHeight(x, z);
 
             // Tower
             const towerGeo = new THREE.CylinderGeometry(1, 1.5, 8, 8);
@@ -1503,7 +2522,7 @@
 
         // Create small arms fire zone
         function createSmallArmsZone(x, z, radius) {
-            const th = terrainHeight(x, z);
+            const th = sampleTerrainHeight(x, z);
 
             const zoneGeo = new THREE.CircleGeometry(radius, 32);
             const zoneMat = new THREE.MeshBasicMaterial({
@@ -1560,6 +2579,10 @@
 
         // Click to set attack target
         window.addEventListener('click', (event) => {
+            if (event.target.closest('#swarm-mode-toggle, #metrics-panel, #environment-panel, #formation-panel, #mission-modal')) {
+                return;
+            }
+
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -1568,17 +2591,14 @@
 
             if (intersects.length > 0) {
                 const point = intersects[0].point;
-                attackTarget = point.clone();
+                plannedMissionTarget = null;
+                configureMissionPath(point);
+                resetSimulation();
+                attackTarget = activeMissionTarget.clone();
                 isAttacking = true;
-
-                // Position target marker
-                targetMarker.position.set(point.x, point.y + 0.5, point.z);
                 targetMarker.visible = true;
-                targetRing.position.set(point.x, point.y + 1, point.z);
                 targetRing.visible = true;
-
-                // Reload ammo on new target
-                ammoCount = maxAmmo;
+                startMissionRun('retarget');
             }
         });
 
@@ -1637,6 +2657,10 @@
                 drone.userData.jammed = false;
                 drone.userData.destroyed = false;
                 drone.userData.health = 100;
+                drone.userData.formationIndex = i;
+                drone.userData.missionSpeedOffset = 1 + (Math.random() - 0.5) * 0.08;
+                drone.userData.foundryId = `drone-${String(i + 1).padStart(2, '0')}`;
+                drone.userData.battery = 100;
 
                 scene.add(drone);
                 drones.push(drone);
@@ -1650,6 +2674,13 @@
 
             // Hide loading screen
             document.getElementById('loading').classList.add('done');
+            configureMissionPath();
+            resetSimulation();
+            attackTarget = activeMissionTarget.clone();
+            isAttacking = true;
+            targetMarker.visible = true;
+            targetRing.visible = true;
+            startMissionRun('initial-load');
         }, undefined, (err) => {
             console.error('Failed to load drone:', err);
             document.getElementById('loading').textContent = 'Failed to load drone model.';
@@ -1820,20 +2851,28 @@
             // Process threats
             for (let i = 0; i < drones.length; i++) {
                 const drone = drones[i];
-                if (drone.userData.destroyed) continue;
+                if (drone.userData.destroyed || drone.userData.dying) continue;
 
                 // Check SAM threats
                 for (const sam of samSites) {
                     if (!sam.active) continue;
                     const dist = drone.position.distanceTo(sam.position);
-                    if (dist < sam.range && elapsed - sam.lastFireTime > sam.fireRate) {
-                        // SAM fires!
+                    const terrainLos = hasTerrainLineOfSight(sam.position, drone.position, 22, swarmProfiles[swarmMode].exposurePadding);
+                    const altitudeOverGround = drone.position.y - sampleTerrainHeight(drone.position.x, drone.position.z);
+                    const exposed = swarmMode === 'dumb'
+                        ? altitudeOverGround > 28
+                        : altitudeOverGround > swarmProfiles[swarmMode].formationClearance + 6;
+                    if (dist < sam.range && terrainLos && exposed && elapsed - sam.lastFireTime > swarmProfiles[swarmMode].samCooldown) {
                         sam.lastFireTime = elapsed;
-                        if (Math.random() < 0.3) { // 30% hit chance
-                            drone.userData.destroyed = true;
-                            dronesDestroyed++;
-                            createExplosion(drone.position.clone());
-                            drone.visible = false;
+                        sam.fireCount = (sam.fireCount || 0) + 1;
+
+                        const remainingLossBudget = swarmProfiles[swarmMode].expectedLosses - dronesDestroyed;
+                        const budgetBias = remainingLossBudget > 0 ? 1 : 0.15;
+                        const distFactor = 1 - dist / sam.range;
+                        const hitChance = swarmProfiles[swarmMode].hitChance * budgetBias * (0.45 + distFactor * 0.9);
+
+                        if (Math.random() < hitChance) {
+                            beginDroneKill(drone, elapsed);
                         }
                     }
                 }
@@ -1857,10 +2896,7 @@
                         if (Math.random() < zone.hitChance * delta) {
                             drone.userData.health -= 20;
                             if (drone.userData.health <= 0) {
-                                drone.userData.destroyed = true;
-                                dronesDestroyed++;
-                                createExplosion(drone.position.clone());
-                                drone.visible = false;
+                                beginDroneKill(drone, elapsed);
                             }
                         }
                     }
@@ -1884,9 +2920,31 @@
 
             for (let i = 0; i < drones.length; i++) {
                 const drone = drones[i];
+                if (drone.userData.dying) {
+                    drone.position.addScaledVector(drone.userData.fallVelocity, delta);
+                    drone.userData.fallVelocity.y -= delta * 16;
+                    drone.rotation.x += drone.userData.spinVelocity.x * delta;
+                    drone.rotation.y += drone.userData.spinVelocity.y * delta;
+                    drone.rotation.z += drone.userData.spinVelocity.z * delta;
+
+                    const flashIntensity = elapsed < drone.userData.flashUntil ? 0.85 : 0.2;
+                    drone.traverse(child => {
+                        if (child.isMesh && child.material) {
+                            child.material.emissive = new THREE.Color(0xff2222);
+                            child.material.emissiveIntensity = flashIntensity;
+                        }
+                    });
+
+                    if (drone.position.y < sampleTerrainHeight(drone.position.x, drone.position.z) - 12 || elapsed - drone.userData.deathTime > 2.2) {
+                        drone.userData.dying = false;
+                        drone.visible = false;
+                    }
+                    continue;
+                }
+
                 if (drone.userData.destroyed) continue;
 
-                if (drone.userData.isCursorDrone) {
+                if (drone.userData.isCursorDrone && !isAttacking) {
                     // Cursor drone follows mouse
                     const currentPos = drone.position.clone();
 
@@ -1907,12 +2965,26 @@
                         drone.rotation.z = -cross;
                     }
                 } else {
-                    // Drones follow formation pattern
-                    const formation = formations[currentFormation];
-                    const f = drone.userData.flight;
+                    let targetPos;
+                    let targetTangent = null;
 
-                    // Get formation position (with attack target if active)
-                    const targetPos = formation.getPosition(i, elapsed, f, isAttacking ? attackTarget : null);
+                    if (isAttacking && attackTarget && currentMissionPath.length > 1) {
+                        const missionElapsed = Math.max(0, Date.now() / 1000 - missionStartClock);
+                        const laneIndex = drone.userData.formationIndex ?? i;
+                        const lane = laneIndex - (DRONE_COUNT - 1) * 0.5;
+                        const laneOffset = lane * 8;
+                        const staggerDistance = laneIndex * 7;
+                        const cruiseSpeed = swarmProfiles[swarmMode].cruiseSpeed * drone.userData.missionSpeedOffset;
+                        const travelDistance = THREE.MathUtils.clamp(missionElapsed * cruiseSpeed - staggerDistance, 0, missionPathLength);
+                        const bob = Math.sin(elapsed * 2 + laneIndex) * (swarmMode === 'smart' ? 1.4 : 4);
+                        const sample = sampleMissionPoint(travelDistance, laneOffset, bob);
+                        targetPos = sample.position;
+                        targetTangent = sample.tangent;
+                    } else {
+                        const formation = formations[currentFormation];
+                        const f = drone.userData.flight;
+                        targetPos = formation.getPosition(i, elapsed, f, null);
+                    }
 
                     // Store previous position for velocity calculation
                     if (!drone.userData.prevPos) {
@@ -1948,7 +3020,9 @@
                     });
 
                     // Calculate heading based on movement direction
-                    const velocity = new THREE.Vector3().subVectors(drone.position, drone.userData.prevPos);
+                    const velocity = targetTangent
+                        ? new THREE.Vector3().subVectors(drone.position, drone.userData.prevPos).addScaledVector(targetTangent, 0.75)
+                        : new THREE.Vector3().subVectors(drone.position, drone.userData.prevPos);
 
                     if (velocity.length() > 0.01) {
                         const targetRotationY = Math.atan2(velocity.x, velocity.z);
@@ -2032,6 +3106,8 @@
                 dronesDestroyedEl.classList.remove('danger');
             }
 
+            syncDroneTelemetry(elapsed);
+
             controls.update();
             renderer.render(scene, camera);
         }
@@ -2076,6 +3152,7 @@
                 transitionProgress = 1;
                 isTransitioning = false;
                 currentEnv = targetEnv;
+                activeTerrainScale = environments[currentEnv].terrainScale;
             }
 
             const t = transitionProgress;
@@ -2105,6 +3182,7 @@
             const pos = terrainGeo.attributes.position.array;
             const colors = terrainGeo.attributes.color.array;
             const terrainScale = oldEnv.terrainScale + (newEnv.terrainScale - oldEnv.terrainScale) * eased;
+            activeTerrainScale = terrainScale;
 
             for (let i = 0; i < pos.length; i += 3) {
                 const x = pos[i], z = pos[i + 2];
@@ -2132,7 +3210,7 @@
         });
 
         // ── Formation Switching ──
-        function switchFormation(formationName) {
+        function switchFormation(formationName, options = {}) {
             if (!formations[formationName] || formationName === currentFormation) return;
 
             currentFormation = formationName;
@@ -2141,6 +3219,10 @@
             document.querySelectorAll('.formation-option').forEach(el => {
                 el.classList.toggle('active', el.dataset.formation === formationName);
             });
+
+            if (options.logEvent !== false) {
+                logKillChainEvent(`Formation Change - ${formations[formationName].name}`, options.confidence ?? 0.88, 'COMMAND');
+            }
         }
 
         // Add click handlers to formation options
@@ -2149,6 +3231,25 @@
                 switchFormation(option.dataset.formation);
             });
         });
+
+        document.querySelectorAll('.mode-btn').forEach(button => {
+            button.addEventListener('click', async () => {
+                const nextMode = button.dataset.mode;
+                if (nextMode === swarmMode) return;
+                swarmMode = nextMode;
+                useTerrainMasking = swarmMode === 'smart';
+                refreshModeUi();
+                configureMissionPath(attackTarget || activeMissionTarget);
+                resetSimulation();
+                attackTarget = activeMissionTarget.clone();
+                isAttacking = true;
+                targetMarker.visible = true;
+                targetRing.visible = true;
+                await startMissionRun('mode-switch');
+            });
+        });
+        refreshModeUi();
+        checkFoundryHealth();
 
         // ── Kill Chain Flowchart Builder ──
         const missionModal = document.getElementById('mission-modal');
@@ -2258,83 +3359,11 @@
             aiGenerateBtn.textContent = '🤖 Generating...';
 
             try {
-                const response = await fetch('/api/generate-killchain', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ objective })
-                });
-
-                const data = await response.json();
-
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-
-                // Clear existing nodes
-                for (let i = flowNodes.length - 1; i >= 0; i--) {
-                    const node = flowNodes[i];
-                    flowchartCanvas.removeChild(node.element);
-                }
-                flowNodes.length = 0;
-
-                // Clear existing connections
-                for (let i = flowConnections.length - 1; i >= 0; i--) {
-                    connectionSvg.removeChild(flowConnections[i].line);
-                }
-                flowConnections.length = 0;
-
-                // Create nodes from AI response
-                let yOffset = 150;
-                const nodeMap = {};
-
-                for (const nodeType of data.nodes) {
-                    const config = nodeConfig[nodeType];
-                    if (config) {
-                        const xPos = 450;
-                        const yPos = yOffset;
-                        createFlowNode(nodeType, config, xPos, yPos);
-
-                        const nodeId = `node-${nodeIdCounter - 1}`;
-                        nodeMap[nodeType] = nodeId;
-
-                        yOffset += 120;
-                    }
-                }
-
-                // Create connections based on flow
-                setTimeout(() => {
-                    for (let i = 0; i < data.nodes.length - 1; i++) {
-                        const fromType = data.nodes[i];
-                        const toType = data.nodes[i + 1];
-
-                        const fromNode = flowNodes.find(n => n.type === fromType);
-                        const toNode = flowNodes.find(n => n.type === toType);
-
-                        if (fromNode && toNode) {
-                            const fromPort = fromNode.element.querySelector('.flow-node-port.output');
-                            const toPort = toNode.element.querySelector('.flow-node-port.input');
-
-                            const startPos = getPortPosition(fromNode.element, fromPort);
-                            const endPos = getPortPosition(toNode.element, toPort);
-
-                            const line = createConnectionLine(startPos.x, startPos.y, endPos.x, endPos.y);
-                            connectionSvg.appendChild(line);
-
-                            flowConnections.push({
-                                id: `conn-${connectionIdCounter++}`,
-                                fromId: fromNode.id,
-                                toId: toNode.id,
-                                fromPort: fromPort,
-                                toPort: toPort,
-                                line: line
-                            });
-                        }
-                    }
-                }, 100);
-
-                console.log('AI generated kill chain:', data.nodes);
-
+                const nodes = await generateKillChainFromObjective(objective);
+                buildFlowchartFromNodes(nodes);
+                currentMission.objective = objective.trim();
+                setVoiceUi('Mission objective loaded from typed input.', currentMission.objective, 'live');
+                console.log('AI generated kill chain:', nodes);
             } catch (error) {
                 alert('Failed to generate kill chain: ' + error.message);
             } finally {
@@ -2436,6 +3465,7 @@
                     approveBtn.classList.add('approved');
                     approveBtn.disabled = true;
 
+                    logKillChainEvent('Engagement Authorization', 1.0, 'APPROVED');
                     console.log(`Engagement authorized for node ${nodeId}`);
                 });
             }
@@ -2595,7 +3625,7 @@
         });
 
         // Execute mission based on flowchart
-        executeMissionBtn.addEventListener('click', () => {
+        executeMissionBtn.addEventListener('click', async () => {
             console.log('Executing Kill Chain with', flowNodes.length, 'nodes and', flowConnections.length, 'connections');
 
             // Build execution graph from connections
@@ -2647,19 +3677,19 @@
             // Formation selection based on kill chain nodes
             if (hasISRPhase && hasSwarmAssignment) {
                 // Grid for coordinated ISR + attack
-                switchFormation('grid');
+                switchFormation('grid', { logEvent: false });
             } else if (hasExecute && hasSwarmAssignment) {
                 // Delta formation for coordinated strike
-                switchFormation('delta');
+                switchFormation('delta', { logEvent: false });
             } else if (hasSwarmAssignment) {
                 // Swarm for distributed attack
-                switchFormation('swarm');
+                switchFormation('swarm', { logEvent: false });
             } else if (hasISRPhase) {
                 // Perimeter for reconnaissance
-                switchFormation('perimeter');
+                switchFormation('perimeter', { logEvent: false });
             } else if (flowNodes.length > 0) {
                 // Helix for general operations
-                switchFormation('helix');
+                switchFormation('helix', { logEvent: false });
             }
 
             // Environment selection based on mission type
@@ -2679,21 +3709,24 @@
 
             // Trigger attack if we have nodes
             if (flowNodes.length > 0) {
-                const randomX = (Math.random() - 0.5) * 200;
-                const randomZ = (Math.random() - 0.5) * 200;
-                const randomY = terrainHeight(randomX, randomZ);
-
-                attackTarget = new THREE.Vector3(randomX, randomY, randomZ);
-                isAttacking = true;
-                targetMarker.position.set(randomX, randomY + 0.5, randomZ);
-                targetMarker.visible = true;
-                targetRing.position.set(randomX, randomY + 1, randomZ);
-                targetRing.visible = true;
-                ammoCount = maxAmmo;
+                if (plannedMissionTarget) {
+                    configureMissionPath(plannedMissionTarget.clone());
+                } else {
+                    const randomX = (Math.random() - 0.5) * 200;
+                    const randomZ = (Math.random() - 0.5) * 200;
+                    const randomY = sampleTerrainHeight(randomX, randomZ);
+                    configureMissionPath(new THREE.Vector3(randomX, randomY, randomZ));
+                }
             }
 
             // Reset simulation
             resetSimulation();
+            attackTarget = activeMissionTarget.clone();
+            isAttacking = true;
+            targetMarker.visible = true;
+            targetRing.visible = true;
+            await startMissionRun('kill-chain-execution');
+            await logKillChainEvent(`Formation Change - ${formations[currentFormation].name}`, 0.92, 'COMMAND');
 
             // Close modal
             closeModal();
