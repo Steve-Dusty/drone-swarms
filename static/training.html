@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swarm Tinder</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #08080f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color: #e4e4e7; }
+
+        /* Swipe overlay */
+        .swipe-hint { position: fixed; top: 0; bottom: 0; width: 30%; z-index: 20; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+        .swipe-hint.left { left: 0; background: linear-gradient(90deg, rgba(239,68,68,0.25), transparent); }
+        .swipe-hint.right { right: 0; background: linear-gradient(-90deg, rgba(74,222,128,0.25), transparent); }
+        .swipe-hint.flash { opacity: 1; }
+        .swipe-hint span { font-size: 3rem; font-weight: 900; text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .swipe-hint.left span { color: #ef4444; }
+        .swipe-hint.right span { color: #4ade80; }
+
+        /* Top bar */
+        .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 15; padding: 16px 24px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+        .topbar-left h2 { font-size: 0.9rem; font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+        .topbar-left .formation { font-size: 1.4rem; font-weight: 900; color: #fbbf24; text-shadow: 0 2px 12px rgba(0,0,0,0.8); margin-top: 4px; }
+        .topbar-left .stats { font-size: 0.65rem; color: rgba(255,255,255,0.5); margin-top: 6px; line-height: 1.6; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+        .topbar-right { text-align: right; }
+        .progress-text { font-size: 0.75rem; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+        .progress-bar { width: 160px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin-top: 6px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 2px; transition: width 0.3s; }
+        .hp-block { margin-top: 10px; }
+        .hp-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; justify-content: flex-end; }
+        .hp-lbl { font-size: 0.6rem; font-weight: 700; }
+        .hp-bar { width: 100px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        .hp-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+        /* Bottom controls */
+        .controls { position: fixed; bottom: 30px; left: 0; right: 0; z-index: 15; display: flex; justify-content: center; gap: 24px; align-items: center; }
+        .swipe-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); transition: all 0.2s; }
+        .swipe-btn.nope { border-color: rgba(239,68,68,0.5); color: #ef4444; }
+        .swipe-btn.nope:hover { border-color: #ef4444; background: rgba(239,68,68,0.15); transform: scale(1.1); }
+        .swipe-btn.like { border-color: rgba(74,222,128,0.5); color: #4ade80; }
+        .swipe-btn.like:hover { border-color: #4ade80; background: rgba(74,222,128,0.15); transform: scale(1.1); }
+        .keys-hint { font-size: 0.6rem; color: rgba(255,255,255,0.3); text-align: center; margin-top: 8px; position: fixed; bottom: 12px; left: 0; right: 0; z-index: 15; }
+
+        /* Results screen */
+        .results { position: fixed; inset: 0; z-index: 30; background: #08080f; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+        .results.show { display: flex; }
+        .results h1 { font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg, #4ade80, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .results p { font-size: 0.85rem; color: #71717a; max-width: 500px; text-align: center; line-height: 1.6; }
+        .results .genome-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px 32px; font-size: 0.8rem; line-height: 2; }
+        .results .genome-card .label { color: #71717a; }
+        .results .genome-card .val { color: #4ade80; font-weight: 700; font-variant-numeric: tabular-nums; float: right; margin-left: 30px; }
+        .results button { padding: 14px 40px; border: none; border-radius: 12px; background: linear-gradient(135deg, #4ade80, #3b82f6); color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; font-family: inherit; margin-top: 10px; }
+
+        /* Battle narration overlay */
+        .narration-overlay {
+            position: fixed; left: 0; bottom: 0; right: 300px; z-index: 14;
+            max-height: 45vh; overflow-y: auto; pointer-events: none;
+            padding: 20px 24px 16px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 60%, transparent 100%);
+            mask-image: linear-gradient(0deg, black 70%, transparent 100%);
+            -webkit-mask-image: linear-gradient(0deg, black 70%, transparent 100%);
+        }
+        .narration-header {
+            font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.14em; color: #4ade80; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .narration-header .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: pulse 1s infinite; }
+        .narration-text {
+            font-size: 0.78rem; color: rgba(255,255,255,0.85); line-height: 1.65;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            white-space: pre-wrap; word-wrap: break-word;
+        }
+        .narration-text .header-tag { color: #4ade80; font-weight: 700; }
+        .narration-cursor { display: inline-block; width: 2px; height: 1em; background: #4ade80; animation: blink 0.6s infinite; vertical-align: text-bottom; margin-left: 2px; }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* POV strip — right side */
+        .pov-strip {
+            position: fixed; right: 0; top: 0; bottom: 0; width: 300px;
+            z-index: 16; display: flex; flex-direction: column;
+            padding: 8px 10px; gap: 8px; overflow-y: auto;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(12px);
+            border-left: 1px solid rgba(255,255,255,0.08);
+        }
+        .pov-strip-title {
+            font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.14em; color: rgba(255,255,255,0.35); text-align: center;
+            padding: 6px 0;
+        }
+        .pov-card {
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+            overflow: hidden; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+            position: relative;
+        }
+        .pov-card:hover { border-color: rgba(59,130,246,0.5); transform: scale(1.02); }
+        .pov-card canvas { width: 100%; height: 155px; display: block; }
+        .pov-card-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 8px 10px 6px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+        }
+        .pov-card-overlay .callsign { font-size: 0.65rem; font-weight: 800; color: #60a5fa; }
+        .pov-card-overlay .comm-text {
+            font-size: 0.55rem; color: rgba(255,255,255,0.75); margin-top: 3px;
+            line-height: 1.35;
+            overflow: hidden; text-overflow: ellipsis;
+            display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+        }
+        .pov-card-hud {
+            position: absolute; top: 6px; left: 8px; right: 8px;
+            display: flex; justify-content: space-between; pointer-events: none;
+        }
+        .pov-card-hud .role-tag {
+            font-size: 0.5rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; padding: 2px 6px; border-radius: 3px;
+            background: rgba(59,130,246,0.3); color: #93c5fd;
+        }
+        .pov-card-hud .alt-tag {
+            font-size: 0.5rem; font-weight: 700; color: rgba(255,255,255,0.4);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* POV Modal */
+        .pov-modal {
+            position: fixed; inset: 0; z-index: 50; display: none;
+            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.85);
+        }
+        .pov-modal.show { display: flex; }
+        .pov-modal-box {
+            width: 80vw; max-width: 1000px; border-radius: 14px;
+            overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+            background: #000;
+        }
+        .pov-modal-box .pov-modal-view { position: relative; }
+        .pov-modal-box canvas { width: 100%; height: 55vh; display: block; }
+        .pov-modal-hud {
+            position: absolute; inset: 0; pointer-events: none; padding: 16px 20px;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .pov-modal-hud-top { display: flex; justify-content: space-between; }
+        .pov-hud-tag {
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; padding: 4px 10px; border-radius: 4px;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .pov-hud-tag.blue { color: #60a5fa; border-color: rgba(59,130,246,0.3); }
+        .pov-hud-tag.yellow { color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+        .pov-hud-tag.red { color: #f87171; border-color: rgba(239,68,68,0.3); }
+        .pov-modal-hud-bottom {
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+            border-radius: 8px; padding: 12px 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .pov-comm-live {
+            font-size: 1rem; font-weight: 700; color: #60a5fa;
+            margin-bottom: 6px; display: flex; align-items: center; gap: 8px;
+        }
+        .pov-comm-live .dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: pulse 1s infinite; }
+        .pov-comm-msg { font-size: 0.82rem; color: #e4e4e7; line-height: 1.5; min-height: 3em; max-height: 8em; overflow-y: auto; white-space: pre-wrap; }
+        .pov-comm-meta { font-size: 0.6rem; color: #71717a; margin-top: 6px; display: flex; gap: 16px; }
+        .pov-comm-meta span { font-variant-numeric: tabular-nums; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .pov-modal-header {
+            padding: 12px 16px; display: flex; justify-content: space-between;
+            align-items: center; background: rgba(255,255,255,0.03);
+        }
+        .pov-modal-header h3 { font-size: 0.9rem; font-weight: 700; color: #60a5fa; }
+        .pov-modal-header .comm { font-size: 0.75rem; color: #a1a1aa; font-style: italic; }
+        .pov-modal-close {
+            width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15);
+            background: none; color: #fff; font-size: 1rem; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .pov-modal-close:hover { background: rgba(255,255,255,0.1); }
+
+        /* Minimap */
+        .minimap-frame {
+            position: fixed; bottom: 16px; left: 16px; z-index: 16;
+            width: 240px; height: 240px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+            overflow: hidden;
+        }
+        .minimap-label {
+            position: absolute; top: 8px; left: 10px; z-index: 1;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.12em; color: rgba(255,255,255,0.4);
+        }
+
+        /* Loading */
+        #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #08080f; z-index: 40; color: #71717a; font-size: 0.9rem; gap: 16px; transition: opacity 0.4s; }
+        #overlay.hidden { opacity: 0; pointer-events: none; }
+        .spinner { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,0.08); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <script type="importmap">
+    { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }}
+    </script>
+</head>
+<body>
+    <div class="swipe-hint left" id="hintL"><span>NOPE</span></div>
+    <div class="swipe-hint right" id="hintR"><span>LIKE</span></div>
+
+    <div class="topbar">
+        <div class="topbar-left">
+            <h2 id="scenarioLabel"></h2>
+            <div class="formation" id="formationLabel"></div>
+            <div class="stats" id="statsLabel"></div>
+        </div>
+        <div class="topbar-right">
+            <div class="progress-text" id="progressText">1 / 20</div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:5%"></div></div>
+            <div class="hp-block">
+                <div class="hp-row"><span class="hp-lbl" style="color:#3b82f6">BLUE</span><div class="hp-bar"><div class="hp-fill" id="blueHP" style="width:100%;background:#3b82f6"></div></div></div>
+                <div class="hp-row"><span class="hp-lbl" style="color:#ef4444">RED</span><div class="hp-bar"><div class="hp-fill" id="redHP" style="width:100%;background:#ef4444"></div></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="swipe-btn nope" id="btnNope">✕</div>
+        <div class="swipe-btn like" id="btnLike">♥</div>
+    </div>
+    <div class="keys-hint">← NOPE &nbsp;&nbsp; LIKE →</div>
+
+    <!-- Battle narration overlay -->
+    <div class="narration-overlay" id="narrationOverlay">
+        <div class="narration-header"><div class="live-dot"></div> TACTICAL AI — LIVE ANALYSIS</div>
+        <div class="narration-text" id="narrationText"></div>
+    </div>
+
+    <!-- POV Strip -->
+    <div class="pov-strip" id="povStrip">
+        <div class="pov-strip-title">DRONE POV</div>
+    </div>
+
+    <!-- POV Modal -->
+    <div class="pov-modal" id="povModal">
+        <div class="pov-modal-box">
+            <div class="pov-modal-header">
+                <h3 id="povModalTitle">BLUE-1</h3>
+                <button class="pov-modal-close" id="povModalClose">✕</button>
+            </div>
+            <div class="pov-modal-view">
+                <canvas id="povModalCanvas"></canvas>
+                <div class="pov-modal-hud">
+                    <div class="pov-modal-hud-top">
+                        <span class="pov-hud-tag blue" id="povHudRole">ATK</span>
+                        <span class="pov-hud-tag yellow" id="povHudAlt">15m</span>
+                        <span class="pov-hud-tag red" id="povHudThreat">0 THREATS</span>
+                    </div>
+                    <div class="pov-modal-hud-bottom">
+                        <div class="pov-comm-live"><div class="dot"></div> LIVE COMMS</div>
+                        <div class="pov-comm-msg" id="povHudComm">Standby...</div>
+                        <div class="pov-comm-meta">
+                            <span id="povHudPos">POS: 0, 0</span>
+                            <span id="povHudSpd">SPD: 0</span>
+                            <span id="povHudDist">TGT: --m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="minimap-frame" id="minimapFrame">
+        <div class="minimap-label">COORDINATION MAP</div>
+    </div>
+
+    <div class="results" id="results">
+        <h1>PATTERN FOUND</h1>
+        <p id="resultsDesc"></p>
+        <div class="genome-card" id="resultsGenome"></div>
+        <button id="restartBtn">Run Again</button>
+    </div>
+
+    <div id="overlay"><div class="spinner"></div><span>Loading...</span></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ═══════ GENOME ═══════
+        const GENES = {
+            attackRatio:  { min:0.2, max:0.9,   label:'Attack %' },
+            speed:        { min:15,  max:45,     label:'Speed' },
+            avoidStr:     { min:10,  max:50,     label:'Avoidance' },
+            sepDist:      { min:2,   max:6,      label:'Separation' },
+            altitude:     { min:8,   max:35,     label:'Altitude' },
+            aggression:   { min:0.005,max:0.06,  label:'Aggression' },
+            pursuitLerp:  { min:0.02, max:0.12,  label:'Pursuit' },
+            defendRadius: { min:15,  max:60,     label:'Def Radius' },
+        };
+        function rndG(){const g={};for(const[k,v]of Object.entries(GENES))g[k]=v.min+Math.random()*(v.max-v.min);return g;}
+
+        function formationName(g) {
+            if (g.attackRatio > 0.7 && g.speed > 30) return 'BLITZ RUSH';
+            if (g.attackRatio > 0.7 && g.sepDist < 3) return 'TIGHT SWARM';
+            if (g.attackRatio < 0.35 && g.defendRadius > 40) return 'DEFENSIVE RING';
+            if (g.attackRatio < 0.35) return 'FORTRESS';
+            if (g.avoidStr > 35) return 'CAUTIOUS ADVANCE';
+            if (g.aggression > 0.04) return 'HUNTER-KILLER';
+            if (g.altitude > 25) return 'HIGH ALTITUDE';
+            if (g.sepDist > 4.5) return 'WIDE SPREAD';
+            if (g.pursuitLerp > 0.08) return 'RAPID PURSUIT';
+            return 'BALANCED';
+        }
+
+        // ═══════ STATE ═══════
+        const TOTAL_ROUNDS = 20, SIM_TIME = 8, SCALE = 10;
+        let round = 0;
+        let currentGenome = null, currentSim = null;
+        const liked = [], disliked = [];
+
+        // ═══════ RENDERER ═══════
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.4;
+        document.body.appendChild(renderer.domElement);
+        function resize() { renderer.setSize(innerWidth - 300, innerHeight); }
+        resize(); addEventListener('resize', resize);
+
+        const controls = new OrbitControls(new THREE.PerspectiveCamera(), renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.06;
+        controls.maxPolarAngle = Math.PI / 2.1;
+        controls.minDistance = 20; controls.maxDistance = 500;
+
+        // ═══════ MINIMAP ═══════
+        const miniRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        miniRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        miniRenderer.setSize(240, 240);
+        miniRenderer.setClearColor(0x000000, 0);
+        document.getElementById('minimapFrame').appendChild(miniRenderer.domElement);
+
+        const miniCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
+        miniCam.up.set(0, 0, -1); // so X is right, Z is down on minimap
+
+        // Communication lines — added to each sim's scene
+        let commLines = [];      // blue-blue coordination links
+        let goalLines = [];      // drone-to-goal lines
+        let commGroup = null;
+
+        function createCommVisuals(sc) {
+            if (commGroup) sc.remove(commGroup);
+            commGroup = new THREE.Group();
+            commLines = []; goalLines = [];
+
+            // 15 possible comm links (blue team pairs) + 5 goal lines + 5 for red
+            for (let i = 0; i < 20; i++) {
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(6), 3));
+                const isGoal = i >= 10;
+                const mat = new THREE.LineBasicMaterial({
+                    color: isGoal ? 0xfbbf24 : 0x00d4ff,
+                    transparent: true,
+                    opacity: isGoal ? 0.6 : 0.35,
+                });
+                // Use thick lines via LineSegments for comm links
+                const line = new THREE.Line(geo, mat);
+                line.frustumCulled = false;
+                line.visible = false;
+                commGroup.add(line);
+                if (isGoal) goalLines.push(line);
+                else commLines.push(line);
+            }
+
+            // Drone position markers (flat circles on minimap plane)
+            for (let i = 0; i < 15; i++) {
+                const circle = new THREE.Mesh(
+                    new THREE.CircleGeometry(2.5, 8),
+                    new THREE.MeshBasicMaterial({ color: i < 5 ? 0x3b82f6 : 0xef4444, transparent: true, opacity: 0.9 })
+                );
+                circle.rotation.x = -Math.PI / 2;
+                circle.position.y = 100; // high up so visible from top
+                circle.visible = false;
+                circle.userData.markerIdx = i;
+                commGroup.add(circle);
+            }
+
+            sc.add(commGroup);
+        }
+
+        function updateCommVisuals(s) {
+            if (!commGroup || !s) return;
+            const blue = s.blueTeam;
+            const red = s.redTeam;
+            const COMM_RANGE = 80;
+
+            // Blue-blue comm links
+            let lineIdx = 0;
+            for (let i = 0; i < blue.length && lineIdx < commLines.length; i++) {
+                if (!blue[i].userData.alive) continue;
+                for (let j = i + 1; j < blue.length && lineIdx < commLines.length; j++) {
+                    if (!blue[j].userData.alive) continue;
+                    const dist = blue[i].position.distanceTo(blue[j].position);
+                    const line = commLines[lineIdx++];
+                    if (dist < COMM_RANGE) {
+                        const p = line.geometry.attributes.position.array;
+                        p[0] = blue[i].position.x; p[1] = blue[i].position.y + 1; p[2] = blue[i].position.z;
+                        p[3] = blue[j].position.x; p[4] = blue[j].position.y + 1; p[5] = blue[j].position.z;
+                        line.geometry.attributes.position.needsUpdate = true;
+                        line.material.opacity = 0.15 + (1 - dist / COMM_RANGE) * 0.4;
+                        line.visible = true;
+                    } else {
+                        line.visible = false;
+                    }
+                }
+            }
+            for (; lineIdx < commLines.length; lineIdx++) commLines[lineIdx].visible = false;
+
+            // Goal lines — show what each blue drone is targeting
+            for (let i = 0; i < Math.min(blue.length, goalLines.length); i++) {
+                const d = blue[i];
+                const line = goalLines[i];
+                if (!d.userData.alive) { line.visible = false; continue; }
+
+                const target = d.userData.role === 'attack' ? s.redOP : s.blueOP;
+                const p = line.geometry.attributes.position.array;
+                p[0] = d.position.x; p[1] = d.position.y + 1; p[2] = d.position.z;
+                p[3] = target.x; p[4] = target.y + 5; p[5] = target.z;
+                line.geometry.attributes.position.needsUpdate = true;
+                line.material.color.set(d.userData.role === 'attack' ? 0xff6644 : 0x44bbff);
+                line.visible = true;
+            }
+
+            // Drone markers
+            const markers = commGroup.children.filter(c => c.userData.markerIdx !== undefined);
+            const allDrones = [...blue, ...red];
+            for (let i = 0; i < markers.length; i++) {
+                const m = markers[i];
+                if (i < allDrones.length && allDrones[i].userData.alive) {
+                    m.position.set(allDrones[i].position.x, allDrones[i].position.y + 2, allDrones[i].position.z);
+                    m.visible = true;
+                } else {
+                    m.visible = false;
+                }
+            }
+        }
+
+        // ═══════ POV CAMERAS ═══════
+        const povCams = [];
+        const povRenderers = [];
+        let modalDroneIdx = -1;
+        let modalRenderer = null;
+
+        function buildPovStrip(count) {
+            const strip = document.getElementById('povStrip');
+            // Clear old cards
+            strip.querySelectorAll('.pov-card').forEach(c => c.remove());
+            for (const r of povRenderers) r.dispose();
+            povRenderers.length = 0; povCams.length = 0;
+
+            for (let i = 0; i < count; i++) {
+                const cam = new THREE.PerspectiveCamera(90, 280 / 155, 0.5, 500);
+                povCams.push(cam);
+
+                const card = document.createElement('div');
+                card.className = 'pov-card';
+                card.dataset.idx = i;
+
+                const r = new THREE.WebGLRenderer({ antialias: false });
+                r.setSize(280, 155);
+                r.setPixelRatio(1);
+                r.toneMapping = THREE.ACESFilmicToneMapping;
+                r.toneMappingExposure = 1.4;
+                card.appendChild(r.domElement);
+
+                // HUD overlay
+                const hud = document.createElement('div');
+                hud.className = 'pov-card-hud';
+                hud.innerHTML = `<span class="role-tag" id="povRole${i}">ATK</span><span class="alt-tag" id="povAlt${i}">--m</span>`;
+                card.appendChild(hud);
+
+                // Bottom overlay with callsign + comm text
+                const overlay = document.createElement('div');
+                overlay.className = 'pov-card-overlay';
+                overlay.innerHTML = `<div class="callsign">BLUE-${i + 1}</div><div class="comm-text" id="povComm${i}">Initializing tactical AI... analyzing battlefield...</div>`;
+                card.appendChild(overlay);
+
+                card.addEventListener('click', () => openPovModal(i));
+                strip.appendChild(card);
+                povRenderers.push(r);
+            }
+        }
+
+        function updatePovCams(s) {
+            if (!s) return;
+            for (let i = 0; i < s.blueTeam.length && i < povCams.length; i++) {
+                const d = s.blueTeam[i];
+                const cam = povCams[i];
+                if (!d.userData.alive) continue;
+
+                // Camera sits just behind and above the drone, looking forward
+                const vel = d.userData.vel;
+                const fwd = vel.length() > 0.5 ? vel.clone().normalize() : new THREE.Vector3(1, 0, 0);
+                cam.position.copy(d.position).addScaledVector(fwd, -3);
+                cam.position.y += 2;
+
+                // Look toward target
+                const target = d.userData.role === 'attack' ? s.redOP : s.blueOP;
+                cam.lookAt(target.x, target.y + 5, target.z);
+            }
+        }
+
+        function renderPovThumbs(s) {
+            if (!s) return;
+            for (let i = 0; i < povRenderers.length && i < s.blueTeam.length; i++) {
+                const d = s.blueTeam[i];
+                if (!d.userData.alive) {
+                    // Show "DESTROYED" overlay
+                    const commEl = document.getElementById(`povComm${i}`);
+                    if (commEl) commEl.textContent = 'SIGNAL LOST';
+                    continue;
+                }
+                povRenderers[i].render(s.sc, povCams[i]);
+
+                // Update HUD tags
+                const roleEl = document.getElementById(`povRole${i}`);
+                if (roleEl) roleEl.textContent = d.userData.role === 'attack' ? 'ATK' : 'DEF';
+
+                const altEl = document.getElementById(`povAlt${i}`);
+                if (altEl) altEl.textContent = `${d.position.y.toFixed(0)}m`;
+            }
+        }
+
+        // Store last LLM comms per drone for the POV cards
+        let lastCommsTexts = [];
+
+
+        // Modal
+        function openPovModal(idx) {
+            modalDroneIdx = idx;
+            document.getElementById('povModal').classList.add('show');
+            document.getElementById('povModalTitle').textContent = `BLUE-${idx + 1} POV`;
+
+            if (!modalRenderer) {
+                modalRenderer = new THREE.WebGLRenderer({ antialias: true, canvas: document.getElementById('povModalCanvas') });
+                modalRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+                modalRenderer.toneMappingExposure = 1.4;
+            }
+            const box = document.querySelector('.pov-modal-box');
+            modalRenderer.setSize(box.clientWidth, box.clientWidth * 0.55);
+        }
+
+        document.getElementById('povModalClose').addEventListener('click', () => {
+            document.getElementById('povModal').classList.remove('show');
+            modalDroneIdx = -1;
+        });
+        document.getElementById('povModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('povModal')) {
+                document.getElementById('povModal').classList.remove('show');
+                modalDroneIdx = -1;
+            }
+        });
+
+        // ═══════ DRONE MODEL ═══════
+        let droneModel = null;
+        const droneReady = new Promise((res, rej) => {
+            new GLTFLoader().load('/static/drone.glb', g => { droneModel = g.scene; res(); }, undefined, rej);
+        });
+
+        // ═══════ BUILDING TEX ═══════
+        function bldgTex(floors, cols) {
+            const cw=16,ch=16,cv=document.createElement('canvas');
+            cv.width=cols*cw;cv.height=floors*ch;
+            const x=cv.getContext('2d');
+            x.fillStyle=['#b0a898','#a8a0a0','#c0b8a8','#9898a0'][Math.floor(Math.random()*4)];
+            x.fillRect(0,0,cv.width,cv.height);
+            for(let f=0;f<floors;f++)for(let c=0;c<cols;c++){
+                x.fillStyle=Math.random()>0.3?'#7ab8dd':'#3a4455';
+                x.globalAlpha=0.5+Math.random()*0.5;
+                x.fillRect(c*cw+3,f*ch+4,cw-6,ch-6);
+            }
+            x.globalAlpha=1;
+            const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;return t;
+        }
+
+        // ═══════ CREATE SIM ═══════
+        function createSim(genome) {
+            const sc = new THREE.Scene();
+            sc.background = new THREE.Color(0x87ceeb);
+            sc.fog = new THREE.FogExp2(0x87ceeb, 0.002);
+            sc.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const sun = new THREE.DirectionalLight(0xfff5e6, 2.5);
+            sun.position.set(120, 250, 80); sun.castShadow = true;
+            sun.shadow.camera.top = 200; sun.shadow.camera.bottom = -200;
+            sun.shadow.camera.left = -200; sun.shadow.camera.right = 200;
+            sun.shadow.mapSize.set(1024, 1024); sc.add(sun);
+            sc.add(new THREE.HemisphereLight(0x87ceeb, 0x3a5f0b, 0.8));
+
+            // Random city
+            const presets = [
+                { blocks:4, bSize:45, street:14, minH:20, maxH:70, dens:0.75 },
+                { blocks:3, bSize:55, street:16, minH:35, maxH:120, dens:0.7 },
+                { blocks:3, bSize:60, street:22, minH:8, maxH:22, dens:0.5 },
+                { blocks:5, bSize:35, street:18, minH:6, maxH:16, dens:0.6 },
+            ];
+            const cc = presets[Math.floor(Math.random() * presets.length)];
+            const total = cc.blocks * cc.bSize + (cc.blocks - 1) * cc.street;
+            const off = total / 2;
+            const bldgs = [];
+
+            // Ground
+            const gnd = new THREE.Mesh(new THREE.PlaneGeometry(total+100,total+100), new THREE.MeshStandardMaterial({color:0x555555,roughness:0.95}));
+            gnd.rotation.x=-Math.PI/2; gnd.receiveShadow=true; sc.add(gnd);
+
+            for (let bx = 0; bx < cc.blocks; bx++) for (let bz = 0; bz < cc.blocks; bz++) {
+                if (Math.random() > cc.dens) continue;
+                const cx = bx * (cc.bSize + cc.street) - off + cc.bSize / 2;
+                const cz = bz * (cc.bSize + cc.street) - off + cc.bSize / 2;
+                const h = cc.minH + Math.random() * (cc.maxH - cc.minH);
+                const w = cc.bSize * (0.3 + Math.random() * 0.35);
+                const d = cc.bSize * (0.3 + Math.random() * 0.35);
+                const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),
+                    new THREE.MeshStandardMaterial({ map: bldgTex(Math.floor(h / 3.5), Math.floor(w / 3)), roughness: 0.75, metalness: 0.2 }));
+                m.position.set(cx + (Math.random() - 0.5) * 4, h / 2, cz + (Math.random() - 0.5) * 4);
+                m.castShadow = true; m.receiveShadow = true; sc.add(m); bldgs.push(m);
+            }
+
+            // Outposts
+            const makeOP = c => { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.CylinderGeometry(5, 7, 2, 8), new THREE.MeshStandardMaterial({ color: c, roughness: 0.3, metalness: 0.6 }))); const b = new THREE.Mesh(new THREE.SphereGeometry(2, 12, 8), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 2 })); b.position.y = 10; g.add(b); g.add(new THREE.PointLight(c, 8, 40)); return g; };
+            const blueOP = new THREE.Vector3(-off + cc.bSize / 2, 0, 0);
+            const redOP = new THREE.Vector3(off - cc.bSize / 2, 0, 0);
+            const bo = makeOP(0x3b82f6); bo.position.copy(blueOP); sc.add(bo);
+            const ro = makeOP(0xef4444); ro.position.copy(redOP); sc.add(ro);
+
+            // Enemy config — random each round
+            const enemyCount = 3 + Math.floor(Math.random() * 6);
+            const enemySpeed = 14 + Math.random() * 12;
+            const enemyAgg = 0.01 + Math.random() * 0.04;
+
+            // Spawn drones
+            const bbox = new THREE.Box3().setFromObject(droneModel);
+            const sz = bbox.getSize(new THREE.Vector3());
+            const bu = SCALE / Math.max(sz.x, sz.y, sz.z);
+
+            function spawn(base, color, count, gen) {
+                const team = [];
+                for (let i = 0; i < count; i++) {
+                    const dr = droneModel.clone(); dr.scale.setScalar(bu);
+                    dr.traverse(c => { if (c.isMesh) { c.material = c.material.clone(); c.material.color.set(color); c.material.emissive = new THREE.Color(color); c.material.emissiveIntensity = 0.2; } });
+                    const a = (i / count) * Math.PI * 2;
+                    dr.position.set(base.x + Math.cos(a) * 10, gen.altitude || 15, base.z + Math.sin(a) * 10);
+                    dr.userData = { vel: new THREE.Vector3(), alive: true, respawnTimer: 0, role: i < Math.ceil(count * (gen.attackRatio || 0.5)) ? 'attack' : 'defend', trail: [] };
+                    sc.add(dr); team.push(dr);
+                }
+                return team;
+            }
+
+            const blueTeam = spawn(blueOP, 0x3b82f6, 5, genome);
+            const redGen = { attackRatio: 0.5, altitude: 15, speed: enemySpeed, avoidStr: 25, sepDist: 3, aggression: enemyAgg, pursuitLerp: 0.05, defendRadius: 35 };
+            const redTeam = spawn(redOP, 0xef4444, enemyCount, redGen);
+
+            // Trail lines (transparent, show full path)
+            const trailLines = [];
+            for (const team of [blueTeam, redTeam]) {
+                const color = team === blueTeam ? 0x3b82f6 : 0xef4444;
+                for (const dr of team) {
+                    const geo = new THREE.BufferGeometry();
+                    geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(3000), 3));
+                    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.35, linewidth: 1 }));
+                    line.frustumCulled = false;
+                    sc.add(line);
+                    trailLines.push({ line, drone: dr });
+                }
+            }
+
+            const cam = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.5, 1500);
+            cam.position.set(total * 0.25, total * 0.35, total * 0.35);
+            cam.lookAt(0, 5, 0);
+
+            // Comm visuals for minimap
+            createCommVisuals(sc);
+
+            // Pre-compute building bounding boxes for hard collision
+            const bldgBoxes = bldgs.map(m => {
+                const b = new THREE.Box3().setFromObject(m);
+                b.expandByScalar(2); // buffer zone
+                return b;
+            });
+
+            return { sc, cam, bldgs, bldgBoxes, blueTeam, redTeam, blueOP, redOP, genome, redGen, blueHP: 100, redHP: 100, trailLines, total, enemyCount, enemySpeed };
+        }
+
+        // ═══════ TEXT LABELS ═══════
+        function makeLabel(text, color) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.font = 'bold 24px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.roundRect(8, 4, 240, 52, 8);
+            ctx.fill();
+            ctx.fillStyle = color;
+            ctx.fillText(text, 128, 38);
+            const tex = new THREE.CanvasTexture(canvas);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+            sprite.scale.set(16, 4, 1);
+            return sprite;
+        }
+
+        function getStatusText(d, enemies, eOP, oOP) {
+            if (!d.userData.alive) return 'RESPAWNING';
+            const distToTarget = d.position.distanceTo(eOP);
+            const distToBase = d.position.distanceTo(oOP);
+
+            // Check if near enemy
+            let nearestEnemyDist = Infinity;
+            for (const e of enemies) {
+                if (!e.userData.alive) continue;
+                const dist = d.position.distanceTo(e.position);
+                if (dist < nearestEnemyDist) nearestEnemyDist = dist;
+            }
+
+            if (nearestEnemyDist < 12) return 'ENGAGING';
+            if (d.userData.role === 'attack') {
+                if (distToTarget < 20) return 'ON TARGET';
+                if (distToTarget < 60) return 'CLOSING IN';
+                return 'EN ROUTE';
+            } else {
+                if (nearestEnemyDist < 40) return 'INTERCEPTING';
+                if (distToBase < 40) return 'PATROLLING';
+                return 'REPOSITIONING';
+            }
+        }
+
+        // ═══════ UPDATE ═══════
+        const _box = new THREE.Box3();
+        const _center = new THREE.Vector3();
+        const _push = new THREE.Vector3();
+
+        function updateSim(s, dt) {
+            function upTeam(team, enemies, eOP, oOP, gen, isBlue) {
+                for (let i = 0; i < team.length; i++) {
+                    const d = team[i], u = d.userData, vel = u.vel;
+                    if (!u.alive) {
+                        u.respawnTimer -= dt;
+                        if (u.respawnTimer <= 0) { u.alive = true; d.visible = true; if (u.label) u.label.visible = true; d.position.set(oOP.x + (Math.random() - 0.5) * 16, gen.altitude || 15, oOP.z + (Math.random() - 0.5) * 16); }
+                        continue;
+                    }
+
+                    u.trail.push(d.position.x, d.position.y, d.position.z);
+
+                    // Goal
+                    let goal, chasing = false;
+                    if (u.role === 'attack') { goal = eOP; }
+                    else {
+                        let ne = null, nd = gen.defendRadius || 35;
+                        for (const e of enemies) { if (!e.userData.alive) continue; const dist = d.position.distanceTo(e.position); if (dist < nd) { nd = dist; ne = e; } }
+                        if (ne) { goal = ne.position; chasing = true; }
+                        else { const t = Date.now() * 0.001 * 0.3 + i * Math.PI * 2 / team.length; goal = new THREE.Vector3(oOP.x + Math.cos(t) * (gen.defendRadius || 35), gen.altitude || 15, oOP.z + Math.sin(t) * (gen.defendRadius || 35)); }
+                    }
+
+                    const dir = new THREE.Vector3().subVectors(goal, d.position).normalize();
+                    vel.lerp(dir.multiplyScalar(gen.speed || 20), gen.pursuitLerp || 0.05);
+                    vel.y += ((gen.altitude || 15) - d.position.y) * 0.12;
+
+                    // ── HARD BUILDING COLLISION ──
+                    for (const box of s.bldgBoxes) {
+                        if (box.containsPoint(d.position)) {
+                            box.getCenter(_center);
+                            _push.subVectors(d.position, _center);
+                            _push.y = 0; // push horizontally
+                            if (_push.lengthSq() < 0.01) _push.set(1, 0, 0);
+                            _push.normalize();
+                            d.position.addScaledVector(_push, 4);
+                            d.position.y = Math.max(d.position.y, box.max.y + 3);
+                            vel.multiplyScalar(0.2);
+                        }
+                        // Proximity repulsion
+                        const closest = box.clampPoint(d.position, new THREE.Vector3());
+                        const dist = d.position.distanceTo(closest);
+                        if (dist < SCALE * 2 && dist > 0.01) {
+                            _push.subVectors(d.position, closest).normalize();
+                            vel.addScaledVector(_push, (SCALE * 2 - dist) * 8 * dt);
+                        }
+                    }
+
+                    // Drone separation
+                    for (let j = 0; j < team.length; j++) {
+                        if (i === j || !team[j].userData.alive) continue;
+                        const sep = new THREE.Vector3().subVectors(d.position, team[j].position);
+                        const dist = sep.length();
+                        if (dist < SCALE * (gen.sepDist || 3) && dist > 0.01) vel.addScaledVector(sep.normalize(), (SCALE * (gen.sepDist || 3) - dist) * 3 * dt);
+                    }
+
+                    // Combat
+                    for (const e of enemies) {
+                        if (!e.userData.alive) continue;
+                        if (d.position.distanceTo(e.position) < 8 && Math.random() < (gen.aggression || 0.02)) {
+                            e.userData.alive = false; e.visible = false; if (e.userData.label) e.userData.label.visible = false;
+                            e.userData.respawnTimer = 3 + Math.random() * 2;
+                        }
+                    }
+
+                    // Outpost damage
+                    if (d.position.distanceTo(eOP) < 14) {
+                        if (isBlue) s.redHP = Math.max(0, s.redHP - 18 * dt);
+                        else s.blueHP = Math.max(0, s.blueHP - 18 * dt);
+                    }
+
+                    vel.y = Math.max(vel.y, (3 - d.position.y) * 3);
+                    vel.multiplyScalar(0.97);
+                    d.position.addScaledVector(vel, dt);
+                    d.position.y = Math.max(d.position.y, 3);
+
+                    if (vel.lengthSq() > 0.5) { d.lookAt(new THREE.Vector3().addVectors(d.position, vel)); d.rotation.z = -vel.x * 0.012; }
+
+                    // ── TEXT LABEL ──
+                    if (!u.label) {
+                        const color = isBlue ? '#60a5fa' : '#f87171';
+                        u.label = makeLabel(u.role.toUpperCase(), color);
+                        d.parent.add(u.label);
+                    }
+                    u.label.position.copy(d.position);
+                    u.label.position.y += SCALE * 1.2;
+                    u.label.visible = u.alive;
+                }
+            }
+            upTeam(s.blueTeam, s.redTeam, s.redOP, s.blueOP, s.genome, true);
+            upTeam(s.redTeam, s.blueTeam, s.blueOP, s.redOP, s.redGen, false);
+
+            // Update trail lines
+            for (const { line, drone } of s.trailLines) {
+                const trail = drone.userData.trail;
+                const pos = line.geometry.attributes.position;
+                const arr = pos.array;
+                const len = Math.min(trail.length, arr.length);
+                for (let i = 0; i < len; i++) arr[i] = trail[i];
+                pos.needsUpdate = true;
+                line.geometry.setDrawRange(0, len / 3);
+            }
+        }
+
+        // ═══════ STREAMING BATTLE NARRATION ═══════
+        let narrationActive = false;
+        let narrationAbort = null;
+
+        async function startNarration(s) {
+            if (narrationActive || !s) return;
+            narrationActive = true;
+
+            const el = document.getElementById('narrationText');
+            el.innerHTML = '';
+
+            const blue = s.blueTeam.map(d => ({
+                role: d.userData.role, alive: d.userData.alive,
+                x: d.position.x, y: d.position.y, z: d.position.z,
+            }));
+            const red = s.redTeam.map(d => ({
+                alive: d.userData.alive,
+                x: d.position.x, y: d.position.y, z: d.position.z,
+            }));
+
+            narrationAbort = new AbortController();
+            try {
+                const res = await fetch('/api/battle-stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ blue, red, blueHP: s.blueHP, redHP: s.redHP }),
+                    signal: narrationAbort.signal,
+                });
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: [DONE]')) continue;
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.t) {
+                                    // Highlight section headers
+                                    let text = data.t;
+                                    text = text.replace(/\[(.*?)\]/g, '<span class="header-tag">[$1]</span>');
+                                    el.innerHTML += text;
+                                    // Auto-scroll
+                                    const overlay = document.getElementById('narrationOverlay');
+                                    overlay.scrollTop = overlay.scrollHeight;
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                }
+            } catch (e) {
+                if (e.name !== 'AbortError') console.error('narration error:', e);
+            }
+            narrationActive = false;
+        }
+
+        function stopNarration() {
+            if (narrationAbort) { narrationAbort.abort(); narrationAbort = null; }
+            narrationActive = false;
+        }
+
+        // ═══════ POV CARD LIVE STATUS (local, no LLM) ═══════
+        let lastCommsTexts = [];
+
+        function updatePovCardStatus(s) {
+            if (!s) return;
+            for (let i = 0; i < s.blueTeam.length; i++) {
+                const d = s.blueTeam[i];
+                const el = document.getElementById(`povComm${i}`);
+                if (!el) continue;
+                if (!d.userData.alive) { el.textContent = 'SYSTEMS OFFLINE — awaiting respawn'; continue; }
+
+                const tgt = d.userData.role === 'attack' ? s.redOP : s.blueOP;
+                const dist = d.position.distanceTo(tgt);
+                const threats = s.redTeam.filter(e => e.userData.alive && d.position.distanceTo(e.position) < 50).length;
+                const spd = d.userData.vel.length();
+                const nearestAlly = s.blueTeam.filter((b,j) => j !== i && b.userData.alive)
+                    .reduce((min, b) => Math.min(min, d.position.distanceTo(b.position)), 999);
+
+                if (d.userData.role === 'attack') {
+                    el.textContent = threats > 0
+                        ? `${threats} hostile${threats>1?'s':''} within 50m → engaging before push. Target outpost ${dist.toFixed(0)}m, ${s.redHP.toFixed(0)}% HP. SPD ${spd.toFixed(1)}`
+                        : `Clear path → pressing attack. Outpost ${dist.toFixed(0)}m away at ${s.redHP.toFixed(0)}% HP. Nearest ally ${nearestAlly.toFixed(0)}m`;
+                } else {
+                    el.textContent = threats > 0
+                        ? `ALERT: ${threats} threat${threats>1?'s':''} in defense zone → intercepting. Base HP ${s.blueHP.toFixed(0)}%. Nearest ally ${nearestAlly.toFixed(0)}m`
+                        : `Sector clear → patrolling. Base HP ${s.blueHP.toFixed(0)}%. Orbit ${dist.toFixed(0)}m from base. SPD ${spd.toFixed(1)}`;
+                }
+            }
+        }
+
+        // ═══════ ROUND MANAGEMENT ═══════
+        let simTimer = 0;
+
+        function nextRound() {
+            round++;
+            if (round > TOTAL_ROUNDS) { showResults(); return; }
+            currentGenome = rndG();
+            currentSim = createSim(currentGenome);
+            simTimer = 0;
+
+            // Update controls
+            controls.object = currentSim.cam;
+            controls.target.set(0, 5, 0);
+            controls.update();
+            buildPovStrip(currentSim.blueTeam.length);
+            // Start streaming battle narration after 1.5s (let positions settle)
+            setTimeout(() => startNarration(currentSim), 1500);
+
+            // UI
+            document.getElementById('formationLabel').textContent = formationName(currentGenome);
+            document.getElementById('scenarioLabel').textContent = `Round ${round}`;
+            document.getElementById('statsLabel').innerHTML =
+                `ATK ${(currentGenome.attackRatio * 100).toFixed(0)}% | SPD ${currentGenome.speed.toFixed(0)} | AGG ${(currentGenome.aggression * 100).toFixed(1)}%<br>` +
+                `ALT ${currentGenome.altitude.toFixed(0)}m | SEP ${currentGenome.sepDist.toFixed(1)} | DEF ${currentGenome.defendRadius.toFixed(0)}m<br>` +
+                `vs ${currentSim.enemyCount} enemies (spd ${currentSim.enemySpeed.toFixed(0)})`;
+            document.getElementById('progressText').textContent = `${round} / ${TOTAL_ROUNDS}`;
+            document.getElementById('progressFill').style.width = `${(round / TOTAL_ROUNDS) * 100}%`;
+        }
+
+        function swipe(isLike) {
+            stopNarration();
+            (isLike ? liked : disliked).push({ ...currentGenome });
+
+            // Flash hint
+            const hint = document.getElementById(isLike ? 'hintR' : 'hintL');
+            hint.classList.add('flash');
+            setTimeout(() => hint.classList.remove('flash'), 300);
+
+            setTimeout(nextRound, 350);
+        }
+
+        // ═══════ RESULTS ═══════
+        function showResults() {
+            const el = document.getElementById('results');
+            el.classList.add('show');
+
+            if (liked.length === 0) {
+                document.getElementById('resultsDesc').textContent = "You didn't like any configs! Try again.";
+                document.getElementById('resultsGenome').innerHTML = '';
+                return;
+            }
+
+            // Average liked genomes to find preferred pattern
+            const avg = {};
+            for (const k of Object.keys(GENES)) {
+                avg[k] = liked.reduce((s, g) => s + g[k], 0) / liked.length;
+            }
+
+            // Compare with disliked to find biggest preference differences
+            const diffs = [];
+            if (disliked.length > 0) {
+                const davg = {};
+                for (const k of Object.keys(GENES)) davg[k] = disliked.reduce((s, g) => s + g[k], 0) / disliked.length;
+                for (const k of Object.keys(GENES)) {
+                    const range = GENES[k].max - GENES[k].min;
+                    diffs.push({ key: k, diff: (avg[k] - davg[k]) / range });
+                }
+                diffs.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+            }
+
+            const topPrefs = diffs.slice(0, 3).map(d => {
+                const dir = d.diff > 0 ? 'higher' : 'lower';
+                return `${GENES[d.key].label} (${dir})`;
+            });
+
+            document.getElementById('resultsDesc').textContent =
+                `You liked ${liked.length}/${TOTAL_ROUNDS} configs. ` +
+                (topPrefs.length ? `You prefer: ${topPrefs.join(', ')}.` : '');
+
+            let html = '';
+            for (const [k, v] of Object.entries(GENES)) {
+                html += `<span class="label">${v.label}</span><span class="val">${avg[k].toFixed(3)}</span><br>`;
+            }
+            document.getElementById('resultsGenome').innerHTML = html;
+        }
+
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            round = 0; liked.length = 0; disliked.length = 0;
+            document.getElementById('results').classList.remove('show');
+            nextRound();
+        });
+
+        // ═══════ CONTROLS ═══════
+        document.getElementById('btnNope').addEventListener('click', () => swipe(false));
+        document.getElementById('btnLike').addEventListener('click', () => swipe(true));
+        addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft') swipe(false);
+            if (e.key === 'ArrowRight') swipe(true);
+        });
+
+        // ═══════ RENDER ═══════
+        const clock = new THREE.Clock();
+        function animate() {
+            const dt = Math.min(clock.getDelta(), 0.05);
+            if (currentSim) {
+                simTimer += dt;
+                updateSim(currentSim, dt);
+                document.getElementById('blueHP').style.width = currentSim.blueHP + '%';
+                document.getElementById('redHP').style.width = currentSim.redHP + '%';
+
+                // Update POV card status every 10 frames
+                if (Math.floor(simTimer * 60) % 10 === 0) updatePovCardStatus(currentSim);
+
+                controls.update();
+                currentSim.cam.aspect = (innerWidth - 300) / innerHeight;
+                currentSim.cam.updateProjectionMatrix();
+                renderer.render(currentSim.sc, currentSim.cam);
+
+                // POV cameras
+                updatePovCams(currentSim);
+                renderPovThumbs(currentSim);
+
+                // Modal POV
+                if (modalDroneIdx >= 0 && modalRenderer && povCams[modalDroneIdx]) {
+                    const mCam = povCams[modalDroneIdx];
+                    const box = document.querySelector('.pov-modal-box');
+                    mCam.aspect = box.clientWidth / (box.clientWidth * 0.55);
+                    mCam.updateProjectionMatrix();
+                    modalRenderer.render(currentSim.sc, mCam);
+                    // Update modal HUD overlay
+                    const md = currentSim.blueTeam[modalDroneIdx];
+                    if (md && md.userData.alive) {
+                        document.getElementById('povHudRole').textContent = md.userData.role === 'attack' ? 'ATTACKING' : 'DEFENDING';
+                        document.getElementById('povHudAlt').textContent = `ALT ${md.position.y.toFixed(0)}m`;
+                        const cEl = document.getElementById(`povComm${modalDroneIdx}`);
+                        document.getElementById('povHudComm').textContent = cEl ? cEl.textContent : '';
+                        document.getElementById('povHudPos').textContent = `POS: ${md.position.x.toFixed(0)}, ${md.position.z.toFixed(0)}`;
+                        document.getElementById('povHudSpd').textContent = `SPD: ${md.userData.vel.length().toFixed(1)}`;
+
+                        const tgt = md.userData.role === 'attack' ? currentSim.redOP : currentSim.blueOP;
+                        document.getElementById('povHudDist').textContent = `TGT: ${md.position.distanceTo(tgt).toFixed(0)}m`;
+
+                        // Count nearby enemies
+                        let threats = 0;
+                        for (const e of currentSim.redTeam) { if (e.userData.alive && md.position.distanceTo(e.position) < 50) threats++; }
+                        document.getElementById('povHudThreat').textContent = `${threats} THREAT${threats !== 1 ? 'S' : ''}`;
+                        document.getElementById('povHudThreat').style.color = threats > 0 ? '#f87171' : '#4ade80';
+                    }
+                }
+
+                // Minimap — top-down orthographic + comm visuals
+                updateCommVisuals(currentSim);
+                const t = currentSim.total || 200;
+                const half = t * 0.6;
+                miniCam.left = -half; miniCam.right = half;
+                miniCam.top = half; miniCam.bottom = -half;
+                miniCam.position.set(0, 300, 0);
+                miniCam.lookAt(0, 0, 0);
+                miniCam.updateProjectionMatrix();
+                miniRenderer.render(currentSim.sc, miniCam);
+            }
+        }
+        renderer.setAnimationLoop(animate);
+
+        // ═══════ INIT ═══════
+        (async () => {
+            await droneReady;
+            nextRound();
+            document.getElementById('overlay').classList.add('hidden');
+        })();
+    </script>
+</body>
+</html>

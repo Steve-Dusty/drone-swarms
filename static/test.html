@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html><head>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","three/examples/jsm/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+</script>
+</head><body>
+<div id="out">Testing imports...</div>
+<script type="module">
+try {
+  const THREE = await import('three');
+  document.getElementById('out').textContent = 'three OK. ';
+  const tiles = await import('/static/tiles-renderer.js');
+  document.getElementById('out').textContent += 'tiles-renderer OK. Exports: ' + Object.keys(tiles).join(', ');
+} catch(e) {
+  document.getElementById('out').textContent = 'ERROR: ' + e.message;
+  console.error(e);
+}
+</script></body></html>

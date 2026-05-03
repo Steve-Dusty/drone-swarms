@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kill Chain Builder</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #08080f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color: #e4e4e7; display: flex; height: 100vh; }
+
+        /* ── Palette ── */
+        .palette {
+            width: 280px; background: rgba(10,10,15,0.95); border-right: 1px solid rgba(255,255,255,0.08);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .palette-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .palette-header h1 { font-size: 1.1rem; font-weight: 800; }
+        .palette-header p { font-size: 0.65rem; color: #52525b; margin-top: 4px; }
+        .palette-section-title { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #52525b; padding: 16px 20px 8px; }
+        .palette-scroll { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+        .node-tpl {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; padding: 12px; margin-bottom: 6px; cursor: grab; transition: all 0.2s;
+        }
+        .node-tpl:hover { background: rgba(255,255,255,0.07); border-color: rgba(68,144,255,0.4); transform: translateX(3px); }
+        .node-tpl:active { cursor: grabbing; }
+        .node-tpl-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+        .node-tpl-status { font-size: 0.58rem; padding: 2px 6px; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+        .status-pending { background: rgba(150,150,150,0.2); color: #999; }
+        .status-approval { background: rgba(255,170,0,0.3); color: #ffaa00; animation: blink 1.5s infinite; }
+        .node-tpl-title { font-size: 0.8rem; font-weight: 600; }
+        .node-tpl-desc { font-size: 0.62rem; color: rgba(255,255,255,0.45); line-height: 1.4; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+        /* ── Objective input ── */
+        .objective-section { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .objective-section textarea {
+            width: 100%; height: 60px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; color: #e4e4e7; padding: 10px; font-size: 0.75rem; font-family: inherit;
+            resize: none; outline: none; line-height: 1.4;
+        }
+        .objective-section textarea:focus { border-color: rgba(68,144,255,0.4); }
+        .objective-section textarea::placeholder { color: #3f3f46; }
+        .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+        .btn {
+            flex: 1; padding: 9px; border: none; border-radius: 6px; font-size: 0.72rem;
+            font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s;
+        }
+        .btn-ai { background: linear-gradient(135deg, rgba(68,144,255,0.3), rgba(139,92,246,0.3)); color: #93c5fd; border: 1px solid rgba(68,144,255,0.3); }
+        .btn-ai:hover { background: linear-gradient(135deg, rgba(68,144,255,0.5), rgba(139,92,246,0.5)); }
+        .btn-exec { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+        .btn-exec:hover { background: rgba(74,222,128,0.25); }
+        .btn-clear { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .btn-clear:hover { background: rgba(239,68,68,0.2); }
+
+        /* ── Canvas ── */
+        .canvas-area {
+            flex: 1; position: relative; overflow: auto;
+            background: repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, transparent 1px, transparent 20px),
+                        repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, transparent 1px, transparent 20px);
+        }
+        .canvas-area svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+        /* ── Flow nodes ── */
+        .flow-node {
+            position: absolute; min-width: 240px; background: rgba(16,16,20,0.95);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: move;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4); transition: border-color 0.2s;
+        }
+        .flow-node:hover { border-color: rgba(68,144,255,0.4); }
+        .flow-node.active { border-color: rgba(74,222,128,0.6); box-shadow: 0 0 0 2px rgba(74,222,128,0.2); }
+        .flow-node.executing { border-color: rgba(68,144,255,0.6); animation: pulse-border 1.5s infinite; }
+        @keyframes pulse-border { 0%,100%{box-shadow:0 0 0 2px rgba(68,144,255,0.1)} 50%{box-shadow:0 0 0 4px rgba(68,144,255,0.3)} }
+        .flow-node.complete { border-color: rgba(74,222,128,0.4); }
+
+        .fn-header { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 8px; }
+        .fn-status { font-size: 0.55rem; padding: 2px 6px; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+        .fn-title { font-size: 0.78rem; font-weight: 600; flex: 1; }
+        .fn-remove { background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; font-size: 1rem; border-radius: 4px; padding: 0 4px; }
+        .fn-remove:hover { background: rgba(239,68,68,0.2); color: #f87171; }
+        .fn-body { padding: 12px; }
+        .fn-desc { font-size: 0.65rem; color: rgba(255,255,255,0.5); line-height: 1.4; margin-bottom: 8px; }
+        .fn-state { font-size: 0.6rem; color: rgba(255,255,255,0.35); padding: 6px 8px; background: rgba(255,255,255,0.02); border-radius: 4px; border: 1px solid rgba(255,255,255,0.06); }
+        .fn-approve { width: 100%; margin-top: 8px; padding: 6px; background: rgba(255,170,0,0.25); border: 1px solid rgba(255,170,0,0.5); color: #ffaa00; border-radius: 4px; font-size: 0.65rem; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+        .fn-approve:hover { background: rgba(255,170,0,0.4); }
+        .fn-approve.approved { background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.4); color: #4ade80; cursor: default; }
+
+        /* Ports */
+        .fn-port {
+            width: 12px; height: 12px; background: rgba(68,144,255,0.3); border: 2px solid #4490ff;
+            border-radius: 50%; position: absolute; cursor: crosshair; transition: all 0.2s;
+        }
+        .fn-port:hover { background: #4490ff; transform: scale(1.3); }
+        .fn-port.input { left: -6px; top: 50%; transform: translateY(-50%); }
+        .fn-port.output { right: -6px; top: 50%; transform: translateY(-50%); }
+
+        /* ── Foundry panel ── */
+        .foundry-bar {
+            position: fixed; bottom: 0; left: 280px; right: 0; z-index: 5;
+            background: rgba(10,10,15,0.9); backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 10px 20px; display: flex; align-items: center; gap: 20px; font-size: 0.65rem;
+        }
+        .foundry-bar .fb-label { color: #52525b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+        .foundry-bar .fb-val { color: #a1a1aa; font-variant-numeric: tabular-nums; }
+        .fb-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .fb-dot.ok { background: #4ade80; }
+        .fb-dot.warn { background: #fbbf24; }
+        .fb-dot.off { background: #ef4444; }
+        .foundry-bar .fb-status { display: flex; align-items: center; gap: 6px; }
+    </style>
+</head>
+<body>
+    <div class="palette">
+        <div class="palette-header">
+            <h1>KILL CHAIN</h1>
+            <p>Drag stages to canvas, connect ports, execute</p>
+        </div>
+        <div class="palette-section-title">Stages</div>
+        <div class="palette-scroll" id="paletteList"></div>
+        <div class="objective-section">
+            <textarea id="objectiveInput" placeholder="e.g. Strike SAM site in northern valley, avoid radar, terrain masking required"></textarea>
+            <div class="btn-row">
+                <button class="btn btn-ai" id="aiGenBtn">AI Generate</button>
+                <button class="btn btn-exec" id="execBtn">Execute</button>
+                <button class="btn btn-clear" id="clearBtn">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-area" id="canvas">
+        <svg id="connSvg"></svg>
+    </div>
+
+    <div class="foundry-bar">
+        <div class="fb-status"><div class="fb-dot off" id="fbDot"></div><span class="fb-label">Foundry</span><span class="fb-val" id="fbStatus">Checking...</span></div>
+        <div><span class="fb-label">Mission </span><span class="fb-val" id="fbMission">—</span></div>
+        <div><span class="fb-label">Events </span><span class="fb-val" id="fbEvents">0</span></div>
+    </div>
+
+    <script>
+        // ═══════ NODE DEFINITIONS ═══════
+        const NODE_DEFS = {
+            'mission-trigger':           { title:'Mission Trigger',           desc:'Operator confirms target coordinates and ROE.',                     statusClass:'status-pending', statusText:'PENDING' },
+            'isr-phase':                 { title:'ISR Phase',                 desc:'Scout drones survey AO, build terrain picture, identify threats.',  statusClass:'status-pending', statusText:'PENDING' },
+            'swarm-assignment':          { title:'Swarm Assignment',          desc:'Attack drones assigned sectors based on terrain and battery.',       statusClass:'status-pending', statusText:'PENDING' },
+            'engagement-authorization':  { title:'Engagement Authorization',  desc:'Human operator approves engagement — REQUIRED BY LAW.',             statusClass:'status-approval', statusText:'AWAITING APPROVAL', needsApproval: true },
+            'execute':                   { title:'Execute',                   desc:'Swarm executes with autonomous deconfliction.',                     statusClass:'status-pending', statusText:'PENDING' },
+            'battle-damage-assessment':  { title:'Battle Damage Assessment',  desc:'Post-strike evaluation of target destruction.',                     statusClass:'status-pending', statusText:'PENDING' },
+            'report-summary':           { title:'Mission Report',            desc:'Summary: target status, ammo expended, losses sustained.',           statusClass:'status-pending', statusText:'PENDING' },
+        };
+
+        // ═══════ STATE ═══════
+        let nodes = [], connections = [], nodeIdCounter = 0, connIdCounter = 0;
+        let dragging = null, dragOffset = { x: 0, y: 0 };
+        let connecting = null; // { fromNode, fromPort }
+        let foundryEvents = 0;
+        const canvas = document.getElementById('canvas');
+        const svg = document.getElementById('connSvg');
+
+        // ═══════ BUILD PALETTE ═══════
+        const paletteEl = document.getElementById('paletteList');
+        for (const [type, def] of Object.entries(NODE_DEFS)) {
+            const el = document.createElement('div');
+            el.className = 'node-tpl';
+            el.dataset.type = type;
+            el.innerHTML = `<div class="node-tpl-head"><span class="node-tpl-status ${def.statusClass}">${def.statusText}</span></div><div class="node-tpl-title">${def.title}</div><div class="node-tpl-desc">${def.desc}</div>`;
+            el.addEventListener('mousedown', e => { e.preventDefault(); startDragFromPalette(type, e); });
+            paletteEl.appendChild(el);
+        }
+
+        // ═══════ DRAG FROM PALETTE ═══════
+        function startDragFromPalette(type, e) {
+            const def = NODE_DEFS[type];
+            const node = createFlowNode(type, def, e.clientX - 280 - 120, e.clientY - 40);
+            dragging = node;
+            dragOffset = { x: 120, y: 40 };
+        }
+
+        // ═══════ CREATE FLOW NODE ═══════
+        function createFlowNode(type, def, x, y) {
+            const id = `node-${nodeIdCounter++}`;
+            const el = document.createElement('div');
+            el.className = 'flow-node';
+            el.style.left = x + 'px'; el.style.top = y + 'px';
+            el.innerHTML = `
+                <div class="fn-port input" data-port="in"></div>
+                <div class="fn-port output" data-port="out"></div>
+                <div class="fn-header">
+                    <span class="fn-status ${def.statusClass}">${def.statusText}</span>
+                    <span class="fn-title">${def.title}</span>
+                    <button class="fn-remove">&times;</button>
+                </div>
+                <div class="fn-body">
+                    <div class="fn-desc">${def.desc}</div>
+                    <div class="fn-state">Status: Pending</div>
+                    ${def.needsApproval ? '<button class="fn-approve">APPROVE ENGAGEMENT</button>' : ''}
+                </div>`;
+
+            // Remove button
+            el.querySelector('.fn-remove').addEventListener('click', () => removeNode(id));
+
+            // Drag
+            el.querySelector('.fn-header').addEventListener('mousedown', e => {
+                if (e.target.closest('.fn-remove')) return;
+                e.preventDefault();
+                dragging = nodes.find(n => n.id === id);
+                const rect = el.getBoundingClientRect();
+                dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            });
+
+            // Ports
+            el.querySelectorAll('.fn-port').forEach(port => {
+                port.addEventListener('mousedown', e => {
+                    e.preventDefault(); e.stopPropagation();
+                    if (port.dataset.port === 'out') {
+                        connecting = { fromId: id, fromPort: port };
+                    }
+                });
+                port.addEventListener('mouseup', e => {
+                    if (connecting && port.dataset.port === 'in' && connecting.fromId !== id) {
+                        addConnection(connecting.fromId, id);
+                    }
+                    connecting = null;
+                });
+            });
+
+            // Approve button
+            const approveBtn = el.querySelector('.fn-approve');
+            if (approveBtn) {
+                approveBtn.addEventListener('click', async () => {
+                    approveBtn.textContent = 'APPROVED'; approveBtn.classList.add('approved');
+                    const statusEl = el.querySelector('.fn-status');
+                    statusEl.textContent = 'APPROVED'; statusEl.className = 'fn-status'; statusEl.style.cssText = 'background:rgba(74,222,128,0.2);color:#4ade80;';
+                    el.querySelector('.fn-state').textContent = 'Status: Engagement authorized';
+                    await logFoundryEvent('Engagement Authorization', 'APPROVED');
+                });
+            }
+
+            canvas.appendChild(el);
+            const node = { id, type, el, x, y, def };
+            nodes.push(node);
+            return node;
+        }
+
+        function removeNode(id) {
+            const idx = nodes.findIndex(n => n.id === id);
+            if (idx < 0) return;
+            canvas.removeChild(nodes[idx].el);
+            nodes.splice(idx, 1);
+            connections = connections.filter(c => {
+                if (c.fromId === id || c.toId === id) { svg.removeChild(c.line); return false; }
+                return true;
+            });
+        }
+
+        // ═══════ CONNECTIONS ═══════
+        function addConnection(fromId, toId) {
+            const from = nodes.find(n => n.id === fromId);
+            const to = nodes.find(n => n.id === toId);
+            if (!from || !to) return;
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            line.setAttribute('stroke', 'rgba(68,144,255,0.5)');
+            line.setAttribute('stroke-width', '2');
+            line.setAttribute('fill', 'none');
+            svg.appendChild(line);
+            connections.push({ id: `conn-${connIdCounter++}`, fromId, toId, line });
+            updateConnection(connections[connections.length - 1]);
+        }
+
+        function updateConnection(conn) {
+            const from = nodes.find(n => n.id === conn.fromId);
+            const to = nodes.find(n => n.id === conn.toId);
+            if (!from || !to) return;
+            const fx = from.el.offsetLeft + from.el.offsetWidth;
+            const fy = from.el.offsetTop + from.el.offsetHeight / 2;
+            const tx = to.el.offsetLeft;
+            const ty = to.el.offsetTop + to.el.offsetHeight / 2;
+            const mx = (fx + tx) / 2;
+            conn.line.setAttribute('d', `M${fx},${fy} C${mx},${fy} ${mx},${ty} ${tx},${ty}`);
+        }
+
+        function updateAllConnections() { connections.forEach(updateConnection); }
+
+        // ═══════ MOUSE MOVE/UP ═══════
+        document.addEventListener('mousemove', e => {
+            if (dragging) {
+                const cr = canvas.getBoundingClientRect();
+                dragging.el.style.left = (e.clientX - cr.left - dragOffset.x) + 'px';
+                dragging.el.style.top = (e.clientY - cr.top - dragOffset.y) + 'px';
+                updateAllConnections();
+            }
+        });
+        document.addEventListener('mouseup', () => { dragging = null; connecting = null; });
+
+        // ═══════ AI GENERATE ═══════
+        document.getElementById('aiGenBtn').addEventListener('click', async () => {
+            const objective = document.getElementById('objectiveInput').value.trim();
+            if (!objective) return;
+            document.getElementById('aiGenBtn').textContent = 'Generating...';
+            try {
+                const res = await fetch('/api/generate-killchain', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ objective }),
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                buildFromNodes(data.nodes);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+            document.getElementById('aiGenBtn').textContent = 'AI Generate';
+        });
+
+        function buildFromNodes(nodeTypes) {
+            // Clear
+            nodes.forEach(n => canvas.removeChild(n.el));
+            nodes.length = 0;
+            connections.forEach(c => svg.removeChild(c.line));
+            connections.length = 0;
+
+            let y = 60;
+            for (const type of nodeTypes) {
+                const def = NODE_DEFS[type];
+                if (!def) continue;
+                createFlowNode(type, def, 400, y);
+                y += 130;
+            }
+            // Auto-connect sequentially
+            setTimeout(() => {
+                for (let i = 0; i < nodes.length - 1; i++) {
+                    addConnection(nodes[i].id, nodes[i + 1].id);
+                }
+            }, 50);
+        }
+
+        // ═══════ CLEAR ═══════
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            nodes.forEach(n => canvas.removeChild(n.el));
+            nodes.length = 0;
+            connections.forEach(c => svg.removeChild(c.line));
+            connections.length = 0;
+        });
+
+        // ═══════ EXECUTE ═══════
+        document.getElementById('execBtn').addEventListener('click', async () => {
+            if (nodes.length === 0) return;
+            const missionId = `m-${Date.now()}`;
+            document.getElementById('fbMission').textContent = missionId.slice(-8);
+
+            // Log mission start to Foundry
+            await logFoundryEvent('Mission Start', 'INITIATED');
+
+            // Animate through nodes sequentially
+            for (let i = 0; i < nodes.length; i++) {
+                const node = nodes[i];
+                node.el.classList.add('executing');
+                node.el.querySelector('.fn-state').textContent = 'Status: Executing...';
+                const statusEl = node.el.querySelector('.fn-status');
+                statusEl.textContent = 'EXECUTING'; statusEl.className = 'fn-status'; statusEl.style.cssText = 'background:rgba(68,144,255,0.3);color:#4490ff;';
+
+                // Wait for approval if needed
+                if (node.def.needsApproval) {
+                    const approveBtn = node.el.querySelector('.fn-approve');
+                    if (approveBtn && !approveBtn.classList.contains('approved')) {
+                        statusEl.textContent = 'AWAITING APPROVAL'; statusEl.style.cssText = 'background:rgba(255,170,0,0.3);color:#ffaa00;';
+                        await new Promise(resolve => {
+                            const check = setInterval(() => {
+                                if (approveBtn.classList.contains('approved')) { clearInterval(check); resolve(); }
+                            }, 200);
+                        });
+                    }
+                } else {
+                    await new Promise(r => setTimeout(r, 1500));
+                }
+
+                await logFoundryEvent(node.def.title, 'COMPLETED');
+                node.el.classList.remove('executing');
+                node.el.classList.add('complete');
+                statusEl.textContent = 'COMPLETE'; statusEl.style.cssText = 'background:rgba(74,222,128,0.2);color:#44ff90;';
+                node.el.querySelector('.fn-state').textContent = 'Status: Complete';
+            }
+        });
+
+        // ═══════ FOUNDRY LOGGING ═══════
+        async function logFoundryEvent(nodeName, action) {
+            foundryEvents++;
+            document.getElementById('fbEvents').textContent = foundryEvents;
+            try {
+                await fetch('/api/foundry/killchain-event', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mission_id: 'active', node_name: nodeName, action_taken: action }),
+                });
+            } catch (e) { console.warn('Foundry log error:', e); }
+        }
+
+        // ═══════ CHECK FOUNDRY ═══════
+        (async () => {
+            try {
+                const res = await fetch('/api/foundry/health');
+                const data = await res.json();
+                const dot = document.getElementById('fbDot');
+                const status = document.getElementById('fbStatus');
+                if (data.configured) {
+                    dot.className = 'fb-dot ok'; status.textContent = 'Connected';
+                } else {
+                    dot.className = 'fb-dot warn'; status.textContent = 'Not configured';
+                }
+            } catch (e) {
+                document.getElementById('fbDot').className = 'fb-dot off';
+                document.getElementById('fbStatus').textContent = 'Offline';
+            }
+        })();
+    </script>
+</body>
+</html>

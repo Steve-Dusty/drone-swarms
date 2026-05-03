@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<title>Splat Test</title>
+<style>* { margin: 0; } body { background: #000; }</style>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+}
+</script>
+</head>
+<body>
+<div id="info" style="position:fixed;top:10px;left:10px;color:#fff;font:14px monospace;z-index:99"></div>
+<script type="module">
+import { Viewer } from '/static/splat-renderer.js';
+
+const info = document.getElementById('info');
+info.textContent = 'Creating viewer...';
+
+try {
+    const viewer = new Viewer({
+        cameraUp: [0, -1, 0],
+        initialCameraPosition: [0, -5, -10],
+        initialCameraLookAt: [0, 0, 0],
+    });
+
+    info.textContent = 'Loading train.splat...';
+
+    await viewer.addSplatScene('/static/splats/train.splat', {
+        splatAlphaRemovalThreshold: 5,
+    });
+
+    info.textContent = 'Loaded! You should see the scene.';
+} catch(e) {
+    info.textContent = 'ERROR: ' + e.message;
+    console.error(e);
+}
+</script>
+</body></html>
