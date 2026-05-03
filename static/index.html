@@ -3,366 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drone Forge</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <title>Drone Swarm Command</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #08080f; color: #e4e4e7; min-height: 100vh; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: #08080f;
-            color: #e4e4e7;
-            min-height: 100vh;
+        .container { max-width: 900px; margin: 0 auto; padding: 60px 24px 80px; }
+
+        header { text-align: center; margin-bottom: 50px; }
+        h1 { font-size: 2.8rem; font-weight: 900; letter-spacing: -0.03em; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ef4444 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: #52525b; font-size: 0.95rem; margin-top: 8px; }
+
+        /* Foundry status */
+        .foundry-status {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            margin-top: 20px; font-size: 0.75rem; color: #71717a;
         }
+        .foundry-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .foundry-dot.ok { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.4); }
+        .foundry-dot.off { background: #ef4444; }
+        .foundry-dot.loading { background: #fbbf24; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .foundry-url { color: #4ade80; font-family: monospace; font-size: 0.65rem; }
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse at 25% 15%, rgba(0, 212, 255, 0.06) 0%, transparent 60%),
-                radial-gradient(ellipse at 75% 85%, rgba(139, 92, 246, 0.06) 0%, transparent 60%);
-            pointer-events: none;
-        }
-
-        .container { max-width: 680px; margin: 0 auto; padding: 48px 24px 80px; }
-
-        header { text-align: center; margin-bottom: 48px; }
-
-        h1 {
-            font-size: 2.8rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .subtitle { color: #52525b; font-size: 1rem; margin-top: 6px; }
+        /* Cards grid */
+        .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 
         .card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 28px;
-            margin-bottom: 20px;
-            transition: opacity 0.4s, border-color 0.4s;
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px; padding: 28px; cursor: pointer; transition: all 0.25s;
+            text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 12px;
         }
+        .card:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
 
-        .card.active { border-color: rgba(0, 212, 255, 0.15); }
-        .card.disabled { opacity: 0.3; pointer-events: none; }
+        .card-icon { font-size: 2rem; }
+        .card h2 { font-size: 1.1rem; font-weight: 700; }
+        .card p { font-size: 0.78rem; color: #71717a; line-height: 1.5; }
+        .card-tag { display: inline-block; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 3px 8px; border-radius: 4px; margin-top: auto; width: fit-content; }
+        .tag-live { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
+        .tag-foundry { background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
+        .tag-ai { background: rgba(139,92,246,0.1); color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
+        .tag-3d { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
 
-        .step-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: #00d4ff;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
+        .card.featured { grid-column: span 2; border-color: rgba(59,130,246,0.2); background: rgba(59,130,246,0.03); }
+        .card.featured:hover { border-color: rgba(59,130,246,0.4); }
 
-        .card h2 { font-size: 1.15rem; font-weight: 600; margin-bottom: 18px; }
-
-        textarea {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            color: #e4e4e7;
-            padding: 14px 16px;
-            font-size: 0.95rem;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 90px;
-            outline: none;
-            transition: border-color 0.2s;
-            line-height: 1.5;
-        }
-
-        textarea:focus { border-color: rgba(0, 212, 255, 0.35); }
-        textarea::placeholder { color: #3f3f46; }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 11px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #00d4ff, #8b5cf6);
-            color: #fff;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.2);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            color: #a1a1aa;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.08);
-            color: #e4e4e7;
-        }
-
-        .btn-group { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
-
-        .image-container {
-            margin-top: 18px;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #000;
-        }
-
-        .image-container img { width: 100%; display: block; }
-
-        model-viewer {
-            width: 100%;
-            height: 420px;
-            border-radius: 12px;
-            background: radial-gradient(ellipse at center, #111118 0%, #08080f 100%);
-            margin-top: 18px;
-            --poster-color: transparent;
-        }
-
-        .loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 14px;
-            padding: 44px 20px;
-        }
-
-        .spinner {
-            width: 36px;
-            height: 36px;
-            border: 3px solid rgba(0, 212, 255, 0.15);
-            border-top-color: #00d4ff;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .loading-text { color: #52525b; font-size: 0.85rem; }
-
-        .error {
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px solid rgba(239, 68, 68, 0.15);
-            border-radius: 10px;
-            padding: 14px 16px;
-            color: #fca5a5;
-            margin-top: 14px;
-            font-size: 0.85rem;
-            line-height: 1.5;
-        }
-
-        .hidden { display: none !important; }
+        .footer { text-align: center; margin-top: 40px; font-size: 0.65rem; color: #3f3f46; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Drone Forge</h1>
-            <p class="subtitle">Text &rarr; Image &rarr; 3D Model</p>
-            <a href="/simulation" class="btn btn-secondary" style="margin-top: 16px; text-decoration: none; display: inline-flex;">Launch Swarm Simulation</a>
+            <h1>DRONE SWARM COMMAND</h1>
+            <p class="subtitle">Autonomous swarm coordination, kill chain execution, and RL training</p>
+            <div class="foundry-status">
+                <div class="foundry-dot loading" id="fDot"></div>
+                <span>Palantir Foundry:</span>
+                <span id="fStatus">Connecting...</span>
+            </div>
         </header>
 
-        <!-- Step 1: Prompt -->
-        <div class="card active" id="step1">
-            <div class="step-label">Step 1</div>
-            <h2>Describe Your Drone</h2>
-            <textarea id="prompt" placeholder="A futuristic racing drone with neon blue accents and carbon fiber body, highly detailed product shot on white background"></textarea>
-            <div class="btn-group">
-                <button class="btn btn-primary" id="generateBtn" onclick="generateImage()">Generate Image</button>
-            </div>
-            <div id="step1Error" class="error hidden"></div>
+        <div class="cards">
+            <a class="card featured" href="/flowchart">
+                <div class="card-icon">&#9763;</div>
+                <h2>Kill Chain Builder</h2>
+                <p>Drag-and-drop mission flowchart with 7 kill chain stages. AI generates the sequence from a text objective. Drones execute the mission live in 3D. Every stage logs to Palantir Foundry — telemetry, approvals, BDA.</p>
+                <div style="display:flex;gap:6px;">
+                    <span class="card-tag tag-foundry">Foundry Connected</span>
+                    <span class="card-tag tag-ai">AI Mission Planner</span>
+                    <span class="card-tag tag-live">Live 3D</span>
+                </div>
+            </a>
+
+            <a class="card" href="/training">
+                <div class="card-icon">&#9829;</div>
+                <h2>RL Training</h2>
+                <p>Tinder-style swarm evaluation. Swipe to rank drone configs. Streaming LLM narration. POV cameras per drone. 20 rounds, then pattern analysis.</p>
+                <span class="card-tag tag-ai">GPT-4o Streaming</span>
+            </a>
+
+            <a class="card" href="/simulation">
+                <div class="card-icon">&#9876;</div>
+                <h2>Swarm Warfare</h2>
+                <p>Blue vs Red team battles in procedural cities. Drone AI with building avoidance, combat, respawn. Multiple city presets.</p>
+                <span class="card-tag tag-live">Real-time Sim</span>
+            </a>
+
+            <a class="card" href="/api/foundry/health">
+                <div class="card-icon">&#9881;</div>
+                <h2>Foundry Status</h2>
+                <p>Check Palantir Foundry connection, ontology RID, and API health. View configured action endpoints.</p>
+                <span class="card-tag tag-foundry">API Health Check</span>
+            </a>
+
+            <a class="card" href="https://github.com/Steve-Dusty/drone-swarms" target="_blank">
+                <div class="card-icon">&#128187;</div>
+                <h2>GitHub Repo</h2>
+                <p>Source code, documentation, and deployment instructions.</p>
+                <span class="card-tag tag-3d">Open Source</span>
+            </a>
         </div>
 
-        <!-- Step 2: Preview -->
-        <div class="card disabled" id="step2">
-            <div class="step-label">Step 2</div>
-            <h2>Preview &amp; Approve</h2>
-            <div id="imageLoading" class="loading hidden">
-                <div class="spinner"></div>
-                <span class="loading-text">Generating image with Gemini&hellip;</span>
-            </div>
-            <div id="imagePreview" class="hidden">
-                <div class="image-container">
-                    <img id="generatedImage" alt="Generated drone" />
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-secondary" onclick="generateImage()">Regenerate</button>
-                    <button class="btn btn-primary" id="approveBtn" onclick="approve3D()">Approve &rarr; Generate 3D</button>
-                </div>
-            </div>
-            <div id="step2Error" class="error hidden"></div>
-        </div>
-
-        <!-- Step 3: 3D Model -->
-        <div class="card disabled" id="step3">
-            <div class="step-label">Step 3</div>
-            <h2>3D Model</h2>
-            <div id="modelLoading" class="loading hidden">
-                <div class="spinner"></div>
-                <span class="loading-text">Generating 3D model with Trellis&hellip; this may take a minute</span>
-            </div>
-            <div id="modelPreview" class="hidden">
-                <model-viewer
-                    id="modelViewer"
-                    alt="Generated 3D model"
-                    auto-rotate
-                    camera-controls
-                    touch-action="pan-y"
-                    shadow-intensity="1"
-                    environment-image="neutral"
-                    tone-mapping="aces"
-                ></model-viewer>
-                <div class="btn-group">
-                    <button class="btn btn-secondary" onclick="downloadModel()">Download .glb</button>
-                    <button class="btn btn-primary" onclick="startOver()">Start Over</button>
-                </div>
-            </div>
-            <div id="step3Error" class="error hidden"></div>
-        </div>
+        <div class="footer">Drone Swarm Command &middot; Palantir Foundry &middot; Three.js &middot; GPT-4o &middot; Trellis 3D</div>
     </div>
 
     <script>
-        let currentImageBase64 = null;
-        let currentModelUrl = null;
-
-        document.getElementById('prompt').addEventListener('keydown', e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                generateImage();
-            }
-        });
-
-        async function generateImage() {
-            const prompt = document.getElementById('prompt').value.trim();
-            if (!prompt) return;
-
-            hide('step1Error');
-            hide('step2Error');
-
-            activate('step2');
-            show('imageLoading');
-            hide('imagePreview');
-            deactivate('step3');
-            hide('modelPreview');
-            hide('modelLoading');
-
-            document.getElementById('generateBtn').disabled = true;
-
+        (async () => {
             try {
-                const res = await fetch('/api/generate-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt }),
-                });
-
+                const res = await fetch('/api/foundry/health');
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Failed to generate image');
-
-                currentImageBase64 = data.image_base64;
-                const mime = data.mime_type || 'image/png';
-                document.getElementById('generatedImage').src = `data:${mime};base64,${data.image_base64}`;
-
-                hide('imageLoading');
-                show('imagePreview');
-            } catch (err) {
-                hide('imageLoading');
-                showError('step2Error', err.message);
-            } finally {
-                document.getElementById('generateBtn').disabled = false;
+                const dot = document.getElementById('fDot');
+                const status = document.getElementById('fStatus');
+                if (data.configured) {
+                    dot.className = 'foundry-dot ok';
+                    status.innerHTML = '<span class="foundry-url">' + data.url + '</span>';
+                } else {
+                    dot.className = 'foundry-dot off';
+                    status.textContent = 'Not configured';
+                }
+            } catch (e) {
+                document.getElementById('fDot').className = 'foundry-dot off';
+                document.getElementById('fStatus').textContent = 'Offline';
             }
-        }
-
-        async function approve3D() {
-            if (!currentImageBase64) return;
-
-            hide('step3Error');
-            activate('step3');
-            show('modelLoading');
-            hide('modelPreview');
-
-            document.getElementById('approveBtn').disabled = true;
-
-            try {
-                const res = await fetch('/api/generate-3d', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image_base64: currentImageBase64 }),
-                });
-
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Failed to generate 3D model');
-
-                currentModelUrl = data.model_url;
-                document.getElementById('modelViewer').src = data.model_url;
-
-                hide('modelLoading');
-                show('modelPreview');
-            } catch (err) {
-                hide('modelLoading');
-                showError('step3Error', err.message);
-            } finally {
-                document.getElementById('approveBtn').disabled = false;
-            }
-        }
-
-        function downloadModel() {
-            if (currentModelUrl) window.open(currentModelUrl, '_blank');
-        }
-
-        function startOver() {
-            document.getElementById('prompt').value = '';
-            currentImageBase64 = null;
-            currentModelUrl = null;
-            deactivate('step2');
-            deactivate('step3');
-            hide('imagePreview');
-            hide('modelPreview');
-            hide('imageLoading');
-            hide('modelLoading');
-            document.getElementById('prompt').focus();
-        }
-
-        function activate(id) {
-            const el = document.getElementById(id);
-            el.classList.remove('disabled');
-            el.classList.add('active');
-        }
-
-        function deactivate(id) {
-            const el = document.getElementById(id);
-            el.classList.add('disabled');
-            el.classList.remove('active');
-        }
-
-        function show(id) { document.getElementById(id).classList.remove('hidden'); }
-        function hide(id) { document.getElementById(id).classList.add('hidden'); }
-
-        function showError(id, msg) {
-            const el = document.getElementById(id);
-            el.textContent = msg;
-            el.classList.remove('hidden');
-        }
+        })();
     </script>
 </body>
 </html>

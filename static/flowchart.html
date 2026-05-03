@@ -3,409 +3,487 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kill Chain Builder</title>
+    <title>Kill Chain — Foundry Connected</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { overflow: hidden; background: #08080f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color: #e4e4e7; display: flex; height: 100vh; }
+        body { overflow: hidden; background: #08080f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color: #e4e4e7; display: flex; height: 100vh; flex-direction: column; }
+
+        .main { display: flex; flex: 1; overflow: hidden; }
 
         /* ── Palette ── */
         .palette {
-            width: 280px; background: rgba(10,10,15,0.95); border-right: 1px solid rgba(255,255,255,0.08);
-            display: flex; flex-direction: column; overflow: hidden;
+            width: 260px; background: rgba(10,10,15,0.95); border-right: 1px solid rgba(255,255,255,0.08);
+            display: flex; flex-direction: column; flex-shrink: 0;
         }
-        .palette-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .palette-header h1 { font-size: 1.1rem; font-weight: 800; }
-        .palette-header p { font-size: 0.65rem; color: #52525b; margin-top: 4px; }
-        .palette-section-title { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #52525b; padding: 16px 20px 8px; }
-        .palette-scroll { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
-        .node-tpl {
-            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px; padding: 12px; margin-bottom: 6px; cursor: grab; transition: all 0.2s;
-        }
+        .palette-header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .palette-header h1 { font-size: 1rem; font-weight: 800; }
+        .palette-header p { font-size: 0.6rem; color: #52525b; margin-top: 3px; }
+        .palette-section-title { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #52525b; padding: 12px 16px 6px; }
+        .palette-scroll { flex: 1; overflow-y: auto; padding: 0 10px 10px; }
+        .node-tpl { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 10px; margin-bottom: 5px; cursor: grab; transition: all 0.2s; }
         .node-tpl:hover { background: rgba(255,255,255,0.07); border-color: rgba(68,144,255,0.4); transform: translateX(3px); }
-        .node-tpl:active { cursor: grabbing; }
-        .node-tpl-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
-        .node-tpl-status { font-size: 0.58rem; padding: 2px 6px; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
-        .status-pending { background: rgba(150,150,150,0.2); color: #999; }
-        .status-approval { background: rgba(255,170,0,0.3); color: #ffaa00; animation: blink 1.5s infinite; }
-        .node-tpl-title { font-size: 0.8rem; font-weight: 600; }
-        .node-tpl-desc { font-size: 0.62rem; color: rgba(255,255,255,0.45); line-height: 1.4; }
+        .node-tpl-head { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+        .node-tpl-status { font-size: 0.5rem; padding: 1px 5px; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+        .s-pending { background: rgba(150,150,150,0.2); color: #999; }
+        .s-approval { background: rgba(255,170,0,0.3); color: #ffaa00; animation: blink 1.5s infinite; }
+        .node-tpl-title { font-size: 0.75rem; font-weight: 600; }
+        .node-tpl-desc { font-size: 0.58rem; color: rgba(255,255,255,0.4); line-height: 1.3; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
-        /* ── Objective input ── */
-        .objective-section { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
-        .objective-section textarea {
-            width: 100%; height: 60px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px; color: #e4e4e7; padding: 10px; font-size: 0.75rem; font-family: inherit;
-            resize: none; outline: none; line-height: 1.4;
-        }
-        .objective-section textarea:focus { border-color: rgba(68,144,255,0.4); }
+        .objective-section { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .objective-section textarea { width: 100%; height: 50px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; color: #e4e4e7; padding: 8px; font-size: 0.7rem; font-family: inherit; resize: none; outline: none; }
         .objective-section textarea::placeholder { color: #3f3f46; }
-        .btn-row { display: flex; gap: 8px; margin-top: 8px; }
-        .btn {
-            flex: 1; padding: 9px; border: none; border-radius: 6px; font-size: 0.72rem;
-            font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s;
-        }
-        .btn-ai { background: linear-gradient(135deg, rgba(68,144,255,0.3), rgba(139,92,246,0.3)); color: #93c5fd; border: 1px solid rgba(68,144,255,0.3); }
-        .btn-ai:hover { background: linear-gradient(135deg, rgba(68,144,255,0.5), rgba(139,92,246,0.5)); }
+        .btn-row { display: flex; gap: 6px; margin-top: 6px; }
+        .btn { flex: 1; padding: 7px; border: none; border-radius: 5px; font-size: 0.65rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .btn-ai { background: rgba(68,144,255,0.2); color: #93c5fd; border: 1px solid rgba(68,144,255,0.3); }
         .btn-exec { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
-        .btn-exec:hover { background: rgba(74,222,128,0.25); }
         .btn-clear { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
-        .btn-clear:hover { background: rgba(239,68,68,0.2); }
 
-        /* ── Canvas ── */
-        .canvas-area {
-            flex: 1; position: relative; overflow: auto;
-            background: repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, transparent 1px, transparent 20px),
-                        repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, transparent 1px, transparent 20px);
-        }
+        /* ── Middle: split view ── */
+        .center { flex: 1; display: flex; flex-direction: column; }
+
+        /* 3D viewport */
+        .viewport { height: 45%; position: relative; border-bottom: 1px solid rgba(255,255,255,0.08); background: #000; }
+        .viewport canvas { width: 100% !important; height: 100% !important; display: block; }
+        .viewport-hud { position: absolute; top: 10px; left: 14px; z-index: 2; pointer-events: none; }
+        .viewport-hud h3 { font-size: 0.8rem; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+        .viewport-hud p { font-size: 0.6rem; color: rgba(255,255,255,0.4); margin-top: 2px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+        .stage-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 3; font-size: 1.4rem; font-weight: 900; text-shadow: 0 4px 20px rgba(0,0,0,0.8); pointer-events: none; opacity: 0; transition: opacity 0.3s; text-align: center; }
+        .stage-banner.show { opacity: 1; }
+        .stage-banner .sub { font-size: 0.7rem; font-weight: 400; color: rgba(255,255,255,0.5); margin-top: 4px; }
+
+        /* Flowchart canvas */
+        .canvas-area { flex: 1; position: relative; overflow: auto; background: repeating-linear-gradient(0deg,rgba(255,255,255,0.015) 0px,transparent 1px,transparent 20px), repeating-linear-gradient(90deg,rgba(255,255,255,0.015) 0px,transparent 1px,transparent 20px); }
         .canvas-area svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
-        /* ── Flow nodes ── */
-        .flow-node {
-            position: absolute; min-width: 240px; background: rgba(16,16,20,0.95);
-            border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: move;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4); transition: border-color 0.2s;
-        }
+        /* Flow nodes */
+        .flow-node { position: absolute; min-width: 220px; background: rgba(16,16,20,0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 9px; cursor: move; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
         .flow-node:hover { border-color: rgba(68,144,255,0.4); }
-        .flow-node.active { border-color: rgba(74,222,128,0.6); box-shadow: 0 0 0 2px rgba(74,222,128,0.2); }
         .flow-node.executing { border-color: rgba(68,144,255,0.6); animation: pulse-border 1.5s infinite; }
-        @keyframes pulse-border { 0%,100%{box-shadow:0 0 0 2px rgba(68,144,255,0.1)} 50%{box-shadow:0 0 0 4px rgba(68,144,255,0.3)} }
         .flow-node.complete { border-color: rgba(74,222,128,0.4); }
-
-        .fn-header { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 8px; }
-        .fn-status { font-size: 0.55rem; padding: 2px 6px; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
-        .fn-title { font-size: 0.78rem; font-weight: 600; flex: 1; }
-        .fn-remove { background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; font-size: 1rem; border-radius: 4px; padding: 0 4px; }
-        .fn-remove:hover { background: rgba(239,68,68,0.2); color: #f87171; }
-        .fn-body { padding: 12px; }
-        .fn-desc { font-size: 0.65rem; color: rgba(255,255,255,0.5); line-height: 1.4; margin-bottom: 8px; }
-        .fn-state { font-size: 0.6rem; color: rgba(255,255,255,0.35); padding: 6px 8px; background: rgba(255,255,255,0.02); border-radius: 4px; border: 1px solid rgba(255,255,255,0.06); }
-        .fn-approve { width: 100%; margin-top: 8px; padding: 6px; background: rgba(255,170,0,0.25); border: 1px solid rgba(255,170,0,0.5); color: #ffaa00; border-radius: 4px; font-size: 0.65rem; font-weight: 700; cursor: pointer; text-transform: uppercase; }
-        .fn-approve:hover { background: rgba(255,170,0,0.4); }
+        @keyframes pulse-border { 0%,100%{box-shadow:0 0 0 2px rgba(68,144,255,0.1)} 50%{box-shadow:0 0 0 4px rgba(68,144,255,0.3)} }
+        .fn-header { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 6px; }
+        .fn-status { font-size: 0.5rem; padding: 2px 5px; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+        .fn-title { font-size: 0.72rem; font-weight: 600; flex: 1; }
+        .fn-remove { background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; font-size: 0.9rem; }
+        .fn-body { padding: 10px; }
+        .fn-desc { font-size: 0.6rem; color: rgba(255,255,255,0.45); line-height: 1.3; margin-bottom: 6px; }
+        .fn-state { font-size: 0.55rem; color: rgba(255,255,255,0.3); padding: 5px 7px; background: rgba(255,255,255,0.02); border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        .fn-approve { width: 100%; margin-top: 6px; padding: 5px; background: rgba(255,170,0,0.25); border: 1px solid rgba(255,170,0,0.5); color: #ffaa00; border-radius: 4px; font-size: 0.6rem; font-weight: 700; cursor: pointer; text-transform: uppercase; }
         .fn-approve.approved { background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.4); color: #4ade80; cursor: default; }
-
-        /* Ports */
-        .fn-port {
-            width: 12px; height: 12px; background: rgba(68,144,255,0.3); border: 2px solid #4490ff;
-            border-radius: 50%; position: absolute; cursor: crosshair; transition: all 0.2s;
-        }
+        .fn-port { width: 10px; height: 10px; background: rgba(68,144,255,0.3); border: 2px solid #4490ff; border-radius: 50%; position: absolute; cursor: crosshair; }
         .fn-port:hover { background: #4490ff; transform: scale(1.3); }
-        .fn-port.input { left: -6px; top: 50%; transform: translateY(-50%); }
-        .fn-port.output { right: -6px; top: 50%; transform: translateY(-50%); }
+        .fn-port.input { left: -5px; top: 50%; transform: translateY(-50%); }
+        .fn-port.output { right: -5px; top: 50%; transform: translateY(-50%); }
 
-        /* ── Foundry panel ── */
-        .foundry-bar {
-            position: fixed; bottom: 0; left: 280px; right: 0; z-index: 5;
-            background: rgba(10,10,15,0.9); backdrop-filter: blur(8px);
-            border-top: 1px solid rgba(255,255,255,0.06);
-            padding: 10px 20px; display: flex; align-items: center; gap: 20px; font-size: 0.65rem;
+        /* ── Foundry Log ── */
+        .foundry-log {
+            height: 120px; background: rgba(0,0,0,0.6); border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex; flex-direction: column; flex-shrink: 0;
         }
-        .foundry-bar .fb-label { color: #52525b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
-        .foundry-bar .fb-val { color: #a1a1aa; font-variant-numeric: tabular-nums; }
-        .fb-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .fb-dot.ok { background: #4ade80; }
-        .fb-dot.warn { background: #fbbf24; }
-        .fb-dot.off { background: #ef4444; }
-        .foundry-bar .fb-status { display: flex; align-items: center; gap: 6px; }
+        .foundry-log-header {
+            display: flex; align-items: center; gap: 10px; padding: 6px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.6rem;
+        }
+        .fb-dot { width: 7px; height: 7px; border-radius: 50%; }
+        .fb-dot.ok { background: #4ade80; } .fb-dot.off { background: #ef4444; }
+        .fb-label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #52525b; }
+        .fb-val { color: #a1a1aa; font-variant-numeric: tabular-nums; margin-left: 4px; }
+        .foundry-events { flex: 1; overflow-y: auto; padding: 4px 16px; font-size: 0.58rem; font-family: 'SF Mono',monospace; }
+        .foundry-events .ev { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 10px; }
+        .ev .ts { color: #52525b; min-width: 70px; }
+        .ev .action { color: #4ade80; min-width: 100px; font-weight: 600; }
+        .ev .detail { color: #a1a1aa; }
+        .ev .result { color: #3b82f6; }
+        .ev.error .action { color: #ef4444; }
     </style>
+    <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","three/examples/jsm/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+    </script>
 </head>
 <body>
-    <div class="palette">
-        <div class="palette-header">
-            <h1>KILL CHAIN</h1>
-            <p>Drag stages to canvas, connect ports, execute</p>
-        </div>
-        <div class="palette-section-title">Stages</div>
-        <div class="palette-scroll" id="paletteList"></div>
-        <div class="objective-section">
-            <textarea id="objectiveInput" placeholder="e.g. Strike SAM site in northern valley, avoid radar, terrain masking required"></textarea>
-            <div class="btn-row">
-                <button class="btn btn-ai" id="aiGenBtn">AI Generate</button>
-                <button class="btn btn-exec" id="execBtn">Execute</button>
-                <button class="btn btn-clear" id="clearBtn">Clear</button>
+    <div class="main">
+        <div class="palette">
+            <div class="palette-header"><h1>KILL CHAIN</h1><p>Drag stages → connect → execute with Foundry</p></div>
+            <div class="palette-section-title">Stages</div>
+            <div class="palette-scroll" id="paletteList"></div>
+            <div class="objective-section">
+                <textarea id="objectiveInput" placeholder="Strike SAM site in northern valley, avoid radar..."></textarea>
+                <div class="btn-row">
+                    <button class="btn btn-ai" id="aiGenBtn">AI Generate</button>
+                    <button class="btn btn-exec" id="execBtn">Execute</button>
+                    <button class="btn btn-clear" id="clearBtn">Clear</button>
+                </div>
             </div>
         </div>
+        <div class="center">
+            <div class="viewport" id="viewport">
+                <div class="viewport-hud"><h3 id="missionTitle">Awaiting Mission</h3><p id="missionStatus">Build a kill chain and execute</p></div>
+                <div class="stage-banner" id="stageBanner"><span id="stageText"></span><div class="sub" id="stageSub"></div></div>
+            </div>
+            <div class="canvas-area" id="canvas"><svg id="connSvg"></svg></div>
+        </div>
     </div>
 
-    <div class="canvas-area" id="canvas">
-        <svg id="connSvg"></svg>
+    <div class="foundry-log">
+        <div class="foundry-log-header">
+            <div class="fb-dot off" id="fbDot"></div>
+            <span class="fb-label">Foundry</span><span class="fb-val" id="fbStatus">Checking...</span>
+            <span class="fb-label" style="margin-left:20px">Events</span><span class="fb-val" id="fbCount">0</span>
+            <span class="fb-label" style="margin-left:20px">Telemetry</span><span class="fb-val" id="fbTelemetry">0 batches</span>
+        </div>
+        <div class="foundry-events" id="eventLog"></div>
     </div>
 
-    <div class="foundry-bar">
-        <div class="fb-status"><div class="fb-dot off" id="fbDot"></div><span class="fb-label">Foundry</span><span class="fb-val" id="fbStatus">Checking...</span></div>
-        <div><span class="fb-label">Mission </span><span class="fb-val" id="fbMission">—</span></div>
-        <div><span class="fb-label">Events </span><span class="fb-val" id="fbEvents">0</span></div>
-    </div>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-    <script>
-        // ═══════ NODE DEFINITIONS ═══════
-        const NODE_DEFS = {
-            'mission-trigger':           { title:'Mission Trigger',           desc:'Operator confirms target coordinates and ROE.',                     statusClass:'status-pending', statusText:'PENDING' },
-            'isr-phase':                 { title:'ISR Phase',                 desc:'Scout drones survey AO, build terrain picture, identify threats.',  statusClass:'status-pending', statusText:'PENDING' },
-            'swarm-assignment':          { title:'Swarm Assignment',          desc:'Attack drones assigned sectors based on terrain and battery.',       statusClass:'status-pending', statusText:'PENDING' },
-            'engagement-authorization':  { title:'Engagement Authorization',  desc:'Human operator approves engagement — REQUIRED BY LAW.',             statusClass:'status-approval', statusText:'AWAITING APPROVAL', needsApproval: true },
-            'execute':                   { title:'Execute',                   desc:'Swarm executes with autonomous deconfliction.',                     statusClass:'status-pending', statusText:'PENDING' },
-            'battle-damage-assessment':  { title:'Battle Damage Assessment',  desc:'Post-strike evaluation of target destruction.',                     statusClass:'status-pending', statusText:'PENDING' },
-            'report-summary':           { title:'Mission Report',            desc:'Summary: target status, ammo expended, losses sustained.',           statusClass:'status-pending', statusText:'PENDING' },
+        // ═══════ NODE DEFS ═══════
+        const DEFS = {
+            'mission-trigger':          { title:'Mission Trigger',          desc:'Confirm target coords and ROE',          sc:'s-pending', st:'PENDING' },
+            'isr-phase':                { title:'ISR Phase',                desc:'Scout drones survey, build terrain picture', sc:'s-pending', st:'PENDING' },
+            'swarm-assignment':         { title:'Swarm Assignment',         desc:'Assign attack drones to sectors',         sc:'s-pending', st:'PENDING' },
+            'engagement-authorization': { title:'Engagement Auth',          desc:'Human approves engagement — REQUIRED',    sc:'s-approval', st:'APPROVAL', approve:true },
+            'execute':                  { title:'Execute',                  desc:'Swarm attacks with deconfliction',        sc:'s-pending', st:'PENDING' },
+            'battle-damage-assessment': { title:'BDA',                      desc:'Evaluate target destruction',             sc:'s-pending', st:'PENDING' },
+            'report-summary':           { title:'Mission Report',           desc:'Summary, losses, ammo expended',          sc:'s-pending', st:'PENDING' },
         };
 
-        // ═══════ STATE ═══════
+        // ═══════ 3D SCENE ═══════
+        const vp = document.getElementById('viewport');
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.4;
+        renderer.shadowMap.enabled = true;
+        vp.prepend(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb);
+        scene.fog = new THREE.FogExp2(0x87ceeb, 0.002);
+        const camera = new THREE.PerspectiveCamera(55, 1, 0.5, 1500);
+        camera.position.set(80, 100, 100);
+        camera.lookAt(0, 0, 0);
+        const ctrl = new OrbitControls(camera, renderer.domElement);
+        ctrl.enableDamping = true; ctrl.dampingFactor = 0.06;
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const sun = new THREE.DirectionalLight(0xfff5e6, 2.5);
+        sun.position.set(120, 250, 80); sun.castShadow = true;
+        sun.shadow.camera.top = 200; sun.shadow.camera.bottom = -200;
+        sun.shadow.camera.left = -200; sun.shadow.camera.right = 200;
+        sun.shadow.mapSize.set(1024, 1024); scene.add(sun);
+        scene.add(new THREE.HemisphereLight(0x87ceeb, 0x3a5f0b, 0.8));
+
+        // Ground + city
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.95 }));
+        ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+        const buildings = [];
+        for (let i = 0; i < 20; i++) {
+            const h = 15 + Math.random() * 60;
+            const b = new THREE.Mesh(new THREE.BoxGeometry(12 + Math.random() * 20, h, 12 + Math.random() * 20),
+                new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.7 }));
+            b.position.set((Math.random() - 0.5) * 250, h / 2, (Math.random() - 0.5) * 250);
+            b.castShadow = true; b.receiveShadow = true; scene.add(b); buildings.push(b);
+        }
+
+        // Target marker
+        const targetMarker = new THREE.Group();
+        const tBase = new THREE.Mesh(new THREE.CylinderGeometry(5, 7, 2, 8), new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3, metalness: 0.6 }));
+        const tBeacon = new THREE.Mesh(new THREE.SphereGeometry(2, 12, 8), new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xef4444, emissiveIntensity: 2 }));
+        tBeacon.position.y = 10;
+        targetMarker.add(tBase, tBeacon, new THREE.PointLight(0xef4444, 8, 40));
+        targetMarker.position.set(80, 0, -60);
+        targetMarker.visible = false;
+        scene.add(targetMarker);
+
+        // Drones
+        let droneModel = null;
+        const drones = [];
+        const droneReady = new Promise((res, rej) => {
+            new GLTFLoader().load('/static/drone.glb', g => { droneModel = g.scene; res(); }, undefined, rej);
+        });
+
+        function spawnDrones(count, basePos, targetPos) {
+            drones.forEach(d => scene.remove(d));
+            drones.length = 0;
+            if (!droneModel) return;
+            const bbox = new THREE.Box3().setFromObject(droneModel);
+            const sz = bbox.getSize(new THREE.Vector3());
+            const scale = 6 / Math.max(sz.x, sz.y, sz.z);
+            for (let i = 0; i < count; i++) {
+                const d = droneModel.clone();
+                d.scale.setScalar(scale);
+                d.traverse(c => { if (c.isMesh) { c.material = c.material.clone(); c.material.color.set(0x3b82f6); c.material.emissive = new THREE.Color(0x3b82f6); c.material.emissiveIntensity = 0.2; } });
+                const a = (i / count) * Math.PI * 2;
+                d.position.set(basePos.x + Math.cos(a) * 15, 15 + Math.random() * 10, basePos.z + Math.sin(a) * 15);
+                d.userData = { vel: new THREE.Vector3(), phase: 'idle', targetPos: targetPos.clone(), basePos: basePos.clone(), idx: i, count };
+                scene.add(d); drones.push(d);
+            }
+        }
+
+        function updateDrones(dt, phase) {
+            for (const d of drones) {
+                const u = d.userData, vel = u.vel;
+                let goal;
+                if (phase === 'isr') {
+                    const t = Date.now() * 0.001 * 0.3 + u.idx * Math.PI * 2 / u.count;
+                    const r = 60 + u.idx * 10;
+                    goal = new THREE.Vector3(u.targetPos.x + Math.cos(t) * r, 25, u.targetPos.z + Math.sin(t) * r);
+                } else if (phase === 'assign') {
+                    const a = (u.idx / u.count) * Math.PI * 2;
+                    goal = new THREE.Vector3(u.targetPos.x + Math.cos(a) * 40, 20, u.targetPos.z + Math.sin(a) * 40);
+                } else if (phase === 'attack') {
+                    goal = new THREE.Vector3(u.targetPos.x + (Math.random() - 0.5) * 10, 12, u.targetPos.z + (Math.random() - 0.5) * 10);
+                } else if (phase === 'bda') {
+                    const t = Date.now() * 0.001 * 0.5 + u.idx * Math.PI * 2 / u.count;
+                    goal = new THREE.Vector3(u.targetPos.x + Math.cos(t) * 30, 30, u.targetPos.z + Math.sin(t) * 30);
+                } else if (phase === 'rtb') {
+                    goal = new THREE.Vector3(u.basePos.x + (u.idx - u.count / 2) * 8, 15, u.basePos.z);
+                } else {
+                    goal = d.position.clone(); goal.y = 15;
+                }
+                const dir = new THREE.Vector3().subVectors(goal, d.position).normalize();
+                vel.lerp(dir.multiplyScalar(25), 0.04);
+                vel.y += (goal.y - d.position.y) * 0.1;
+                vel.multiplyScalar(0.97);
+                d.position.addScaledVector(vel, dt);
+                if (vel.lengthSq() > 0.5) { d.lookAt(new THREE.Vector3().addVectors(d.position, vel)); d.rotation.z = -vel.x * 0.01; }
+            }
+        }
+
+        function resize() {
+            const rect = vp.getBoundingClientRect();
+            renderer.setSize(rect.width, rect.height);
+            camera.aspect = rect.width / rect.height;
+            camera.updateProjectionMatrix();
+        }
+        resize(); addEventListener('resize', resize);
+
+        let dronePhase = 'idle';
+        const clock = new THREE.Clock();
+        function animate() {
+            ctrl.update();
+            updateDrones(Math.min(clock.getDelta(), 0.05), dronePhase);
+            renderer.render(scene, camera);
+        }
+        renderer.setAnimationLoop(animate);
+
+        // ═══════ FOUNDRY LOGGING ═══════
+        let eventCount = 0, telemetryBatches = 0;
+        const eventLog = document.getElementById('eventLog');
+
+        function logToUI(action, detail, result, isError = false) {
+            eventCount++;
+            document.getElementById('fbCount').textContent = eventCount;
+            const ts = new Date().toLocaleTimeString('en-US', { hour12: false, fractionalSecondDigits: 1 });
+            const ev = document.createElement('div');
+            ev.className = 'ev' + (isError ? ' error' : '');
+            ev.innerHTML = `<span class="ts">${ts}</span><span class="action">${action}</span><span class="detail">${detail}</span><span class="result">${result}</span>`;
+            eventLog.prepend(ev);
+        }
+
+        async function foundryLog(action, detail, endpoint, payload) {
+            logToUI(action, detail, 'sending...');
+            try {
+                const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await res.json();
+                if (data.ok) {
+                    logToUI(action, detail, '✓ logged to Foundry');
+                } else {
+                    logToUI(action, detail, '⚠ ' + (data.error || 'failed'), true);
+                }
+            } catch (e) {
+                logToUI(action, detail, '✗ ' + e.message, true);
+            }
+        }
+
+        async function sendTelemetry() {
+            if (drones.length === 0) return;
+            telemetryBatches++;
+            document.getElementById('fbTelemetry').textContent = telemetryBatches + ' batches';
+            const payload = drones.map((d, i) => ({ id: `drone-${i}`, x: d.position.x, y: d.position.y, z: d.position.z }));
+            await foundryLog('TELEMETRY', `${payload.length} drones`, '/api/foundry/telemetry', { drones: payload });
+        }
+
+        let telemetryInterval = null;
+
+        // ═══════ FLOWCHART STATE ═══════
         let nodes = [], connections = [], nodeIdCounter = 0, connIdCounter = 0;
         let dragging = null, dragOffset = { x: 0, y: 0 };
-        let connecting = null; // { fromNode, fromPort }
-        let foundryEvents = 0;
+        let connecting = null;
         const canvas = document.getElementById('canvas');
         const svg = document.getElementById('connSvg');
 
-        // ═══════ BUILD PALETTE ═══════
+        // Build palette
         const paletteEl = document.getElementById('paletteList');
-        for (const [type, def] of Object.entries(NODE_DEFS)) {
-            const el = document.createElement('div');
-            el.className = 'node-tpl';
-            el.dataset.type = type;
-            el.innerHTML = `<div class="node-tpl-head"><span class="node-tpl-status ${def.statusClass}">${def.statusText}</span></div><div class="node-tpl-title">${def.title}</div><div class="node-tpl-desc">${def.desc}</div>`;
-            el.addEventListener('mousedown', e => { e.preventDefault(); startDragFromPalette(type, e); });
+        for (const [type, def] of Object.entries(DEFS)) {
+            const el = document.createElement('div'); el.className = 'node-tpl'; el.dataset.type = type;
+            el.innerHTML = `<div class="node-tpl-head"><span class="node-tpl-status ${def.sc}">${def.st}</span></div><div class="node-tpl-title">${def.title}</div><div class="node-tpl-desc">${def.desc}</div>`;
+            el.addEventListener('mousedown', e => { e.preventDefault(); createFlowNode(type, def, e.clientX - 260 - 110, e.clientY - canvas.getBoundingClientRect().top - 30); });
             paletteEl.appendChild(el);
         }
 
-        // ═══════ DRAG FROM PALETTE ═══════
-        function startDragFromPalette(type, e) {
-            const def = NODE_DEFS[type];
-            const node = createFlowNode(type, def, e.clientX - 280 - 120, e.clientY - 40);
-            dragging = node;
-            dragOffset = { x: 120, y: 40 };
-        }
-
-        // ═══════ CREATE FLOW NODE ═══════
         function createFlowNode(type, def, x, y) {
-            const id = `node-${nodeIdCounter++}`;
-            const el = document.createElement('div');
-            el.className = 'flow-node';
-            el.style.left = x + 'px'; el.style.top = y + 'px';
-            el.innerHTML = `
-                <div class="fn-port input" data-port="in"></div>
-                <div class="fn-port output" data-port="out"></div>
-                <div class="fn-header">
-                    <span class="fn-status ${def.statusClass}">${def.statusText}</span>
-                    <span class="fn-title">${def.title}</span>
-                    <button class="fn-remove">&times;</button>
-                </div>
-                <div class="fn-body">
-                    <div class="fn-desc">${def.desc}</div>
-                    <div class="fn-state">Status: Pending</div>
-                    ${def.needsApproval ? '<button class="fn-approve">APPROVE ENGAGEMENT</button>' : ''}
-                </div>`;
-
-            // Remove button
-            el.querySelector('.fn-remove').addEventListener('click', () => removeNode(id));
-
-            // Drag
-            el.querySelector('.fn-header').addEventListener('mousedown', e => {
-                if (e.target.closest('.fn-remove')) return;
-                e.preventDefault();
-                dragging = nodes.find(n => n.id === id);
-                const rect = el.getBoundingClientRect();
-                dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            const id = `n-${nodeIdCounter++}`;
+            const el = document.createElement('div'); el.className = 'flow-node'; el.style.left = x + 'px'; el.style.top = y + 'px';
+            el.innerHTML = `<div class="fn-port input"></div><div class="fn-port output"></div>
+                <div class="fn-header"><span class="fn-status ${def.sc}" id="st-${id}">${def.st}</span><span class="fn-title">${def.title}</span><button class="fn-remove">&times;</button></div>
+                <div class="fn-body"><div class="fn-desc">${def.desc}</div><div class="fn-state" id="state-${id}">Pending</div>${def.approve ? `<button class="fn-approve" id="apr-${id}">APPROVE ENGAGEMENT</button>` : ''}</div>`;
+            el.querySelector('.fn-remove').addEventListener('click', () => { canvas.removeChild(el); nodes = nodes.filter(n => n.id !== id); connections = connections.filter(c => { if (c.fromId === id || c.toId === id) { svg.removeChild(c.line); return false; } return true; }); });
+            el.querySelector('.fn-header').addEventListener('mousedown', e => { if (e.target.closest('.fn-remove')) return; e.preventDefault(); dragging = nodes.find(n => n.id === id); const r = el.getBoundingClientRect(); dragOffset = { x: e.clientX - r.left, y: e.clientY - r.top }; });
+            el.querySelectorAll('.fn-port').forEach(p => {
+                p.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); if (p.classList.contains('output')) connecting = { fromId: id }; });
+                p.addEventListener('mouseup', () => { if (connecting && p.classList.contains('input') && connecting.fromId !== id) addConnection(connecting.fromId, id); connecting = null; });
             });
-
-            // Ports
-            el.querySelectorAll('.fn-port').forEach(port => {
-                port.addEventListener('mousedown', e => {
-                    e.preventDefault(); e.stopPropagation();
-                    if (port.dataset.port === 'out') {
-                        connecting = { fromId: id, fromPort: port };
-                    }
-                });
-                port.addEventListener('mouseup', e => {
-                    if (connecting && port.dataset.port === 'in' && connecting.fromId !== id) {
-                        addConnection(connecting.fromId, id);
-                    }
-                    connecting = null;
-                });
-            });
-
-            // Approve button
-            const approveBtn = el.querySelector('.fn-approve');
-            if (approveBtn) {
-                approveBtn.addEventListener('click', async () => {
-                    approveBtn.textContent = 'APPROVED'; approveBtn.classList.add('approved');
-                    const statusEl = el.querySelector('.fn-status');
-                    statusEl.textContent = 'APPROVED'; statusEl.className = 'fn-status'; statusEl.style.cssText = 'background:rgba(74,222,128,0.2);color:#4ade80;';
-                    el.querySelector('.fn-state').textContent = 'Status: Engagement authorized';
-                    await logFoundryEvent('Engagement Authorization', 'APPROVED');
-                });
-            }
-
             canvas.appendChild(el);
-            const node = { id, type, el, x, y, def };
-            nodes.push(node);
-            return node;
+            const node = { id, type, el, def }; nodes.push(node); return node;
         }
 
-        function removeNode(id) {
-            const idx = nodes.findIndex(n => n.id === id);
-            if (idx < 0) return;
-            canvas.removeChild(nodes[idx].el);
-            nodes.splice(idx, 1);
-            connections = connections.filter(c => {
-                if (c.fromId === id || c.toId === id) { svg.removeChild(c.line); return false; }
-                return true;
-            });
-        }
-
-        // ═══════ CONNECTIONS ═══════
         function addConnection(fromId, toId) {
-            const from = nodes.find(n => n.id === fromId);
-            const to = nodes.find(n => n.id === toId);
-            if (!from || !to) return;
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            line.setAttribute('stroke', 'rgba(68,144,255,0.5)');
-            line.setAttribute('stroke-width', '2');
-            line.setAttribute('fill', 'none');
+            line.setAttribute('stroke', 'rgba(68,144,255,0.5)'); line.setAttribute('stroke-width', '2'); line.setAttribute('fill', 'none');
             svg.appendChild(line);
-            connections.push({ id: `conn-${connIdCounter++}`, fromId, toId, line });
-            updateConnection(connections[connections.length - 1]);
+            const c = { fromId, toId, line }; connections.push(c); updateConn(c);
         }
 
-        function updateConnection(conn) {
-            const from = nodes.find(n => n.id === conn.fromId);
-            const to = nodes.find(n => n.id === conn.toId);
+        function updateConn(c) {
+            const from = nodes.find(n => n.id === c.fromId)?.el, to = nodes.find(n => n.id === c.toId)?.el;
             if (!from || !to) return;
-            const fx = from.el.offsetLeft + from.el.offsetWidth;
-            const fy = from.el.offsetTop + from.el.offsetHeight / 2;
-            const tx = to.el.offsetLeft;
-            const ty = to.el.offsetTop + to.el.offsetHeight / 2;
-            const mx = (fx + tx) / 2;
-            conn.line.setAttribute('d', `M${fx},${fy} C${mx},${fy} ${mx},${ty} ${tx},${ty}`);
+            const fx = from.offsetLeft + from.offsetWidth, fy = from.offsetTop + from.offsetHeight / 2;
+            const tx = to.offsetLeft, ty = to.offsetTop + to.offsetHeight / 2;
+            c.line.setAttribute('d', `M${fx},${fy} C${(fx + tx) / 2},${fy} ${(fx + tx) / 2},${ty} ${tx},${ty}`);
         }
 
-        function updateAllConnections() { connections.forEach(updateConnection); }
-
-        // ═══════ MOUSE MOVE/UP ═══════
-        document.addEventListener('mousemove', e => {
-            if (dragging) {
-                const cr = canvas.getBoundingClientRect();
-                dragging.el.style.left = (e.clientX - cr.left - dragOffset.x) + 'px';
-                dragging.el.style.top = (e.clientY - cr.top - dragOffset.y) + 'px';
-                updateAllConnections();
-            }
-        });
+        document.addEventListener('mousemove', e => { if (dragging) { const cr = canvas.getBoundingClientRect(); dragging.el.style.left = (e.clientX - cr.left - dragOffset.x) + 'px'; dragging.el.style.top = (e.clientY - cr.top - dragOffset.y) + 'px'; connections.forEach(updateConn); } });
         document.addEventListener('mouseup', () => { dragging = null; connecting = null; });
 
-        // ═══════ AI GENERATE ═══════
-        document.getElementById('aiGenBtn').addEventListener('click', async () => {
-            const objective = document.getElementById('objectiveInput').value.trim();
-            if (!objective) return;
-            document.getElementById('aiGenBtn').textContent = 'Generating...';
-            try {
-                const res = await fetch('/api/generate-killchain', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ objective }),
-                });
-                const data = await res.json();
-                if (data.error) throw new Error(data.error);
-                buildFromNodes(data.nodes);
-            } catch (e) {
-                alert('Error: ' + e.message);
-            }
-            document.getElementById('aiGenBtn').textContent = 'AI Generate';
-        });
-
-        function buildFromNodes(nodeTypes) {
-            // Clear
-            nodes.forEach(n => canvas.removeChild(n.el));
-            nodes.length = 0;
-            connections.forEach(c => svg.removeChild(c.line));
-            connections.length = 0;
-
-            let y = 60;
-            for (const type of nodeTypes) {
-                const def = NODE_DEFS[type];
-                if (!def) continue;
-                createFlowNode(type, def, 400, y);
-                y += 130;
-            }
-            // Auto-connect sequentially
-            setTimeout(() => {
-                for (let i = 0; i < nodes.length - 1; i++) {
-                    addConnection(nodes[i].id, nodes[i + 1].id);
-                }
-            }, 50);
+        // ═══════ SHOW STAGE BANNER ═══════
+        function showBanner(text, sub, color = '#fff') {
+            const b = document.getElementById('stageBanner');
+            document.getElementById('stageText').textContent = text;
+            document.getElementById('stageText').style.color = color;
+            document.getElementById('stageSub').textContent = sub;
+            b.classList.add('show');
+            setTimeout(() => b.classList.remove('show'), 2500);
         }
 
-        // ═══════ CLEAR ═══════
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            nodes.forEach(n => canvas.removeChild(n.el));
-            nodes.length = 0;
-            connections.forEach(c => svg.removeChild(c.line));
-            connections.length = 0;
-        });
-
-        // ═══════ EXECUTE ═══════
+        // ═══════ EXECUTE MISSION ═══════
         document.getElementById('execBtn').addEventListener('click', async () => {
             if (nodes.length === 0) return;
             const missionId = `m-${Date.now()}`;
-            document.getElementById('fbMission').textContent = missionId.slice(-8);
+            document.getElementById('missionTitle').textContent = 'Mission Active';
 
-            // Log mission start to Foundry
-            await logFoundryEvent('Mission Start', 'INITIATED');
+            // Start telemetry stream to Foundry
+            const basePos = new THREE.Vector3(-80, 0, 60);
+            const targetPos = targetMarker.position.clone();
+            targetMarker.visible = true;
+            await droneReady;
+            spawnDrones(8, basePos, targetPos);
 
-            // Animate through nodes sequentially
-            for (let i = 0; i < nodes.length; i++) {
-                const node = nodes[i];
+            await foundryLog('MISSION', `Started ${missionId}`, '/api/foundry/mission', { id: missionId, objective: document.getElementById('objectiveInput').value || 'Strike mission' });
+
+            telemetryInterval = setInterval(sendTelemetry, 3000);
+
+            // Execute each node in order
+            const ordered = nodes.slice(); // TODO: topological sort from connections
+            for (let i = 0; i < ordered.length; i++) {
+                const node = ordered[i];
+                const stEl = document.getElementById(`st-${node.id}`);
+                const stateEl = document.getElementById(`state-${node.id}`);
                 node.el.classList.add('executing');
-                node.el.querySelector('.fn-state').textContent = 'Status: Executing...';
-                const statusEl = node.el.querySelector('.fn-status');
-                statusEl.textContent = 'EXECUTING'; statusEl.className = 'fn-status'; statusEl.style.cssText = 'background:rgba(68,144,255,0.3);color:#4490ff;';
+                stEl.textContent = 'EXECUTING'; stEl.style.cssText = 'background:rgba(68,144,255,0.3);color:#4490ff;';
+                stateEl.textContent = 'Executing...';
+                document.getElementById('missionStatus').textContent = node.def.title;
 
-                // Wait for approval if needed
-                if (node.def.needsApproval) {
-                    const approveBtn = node.el.querySelector('.fn-approve');
-                    if (approveBtn && !approveBtn.classList.contains('approved')) {
-                        statusEl.textContent = 'AWAITING APPROVAL'; statusEl.style.cssText = 'background:rgba(255,170,0,0.3);color:#ffaa00;';
+                // Map node type to drone behavior
+                const stageMap = {
+                    'mission-trigger': { phase: 'idle', banner: 'MISSION TRIGGERED', sub: 'Confirming target and ROE', color: '#fbbf24', wait: 2000 },
+                    'isr-phase': { phase: 'isr', banner: 'ISR IN PROGRESS', sub: 'Scout drones surveying area', color: '#60a5fa', wait: 4000 },
+                    'swarm-assignment': { phase: 'assign', banner: 'SWARM ASSIGNED', sub: 'Drones taking formation', color: '#a78bfa', wait: 3000 },
+                    'engagement-authorization': { phase: 'assign', banner: 'AWAITING APPROVAL', sub: 'Human authorization required', color: '#ffaa00', wait: 0 },
+                    'execute': { phase: 'attack', banner: 'EXECUTING STRIKE', sub: 'Weapons free', color: '#ef4444', wait: 4000 },
+                    'battle-damage-assessment': { phase: 'bda', banner: 'BDA IN PROGRESS', sub: 'Assessing damage', color: '#22d3ee', wait: 3000 },
+                    'report-summary': { phase: 'rtb', banner: 'RTB — MISSION COMPLETE', sub: 'Returning to base', color: '#4ade80', wait: 3000 },
+                };
+
+                const stage = stageMap[node.type] || { phase: 'idle', banner: node.def.title, sub: '', color: '#fff', wait: 2000 };
+                dronePhase = stage.phase;
+                showBanner(stage.banner, stage.sub, stage.color);
+
+                await foundryLog('KILLCHAIN', node.def.title, '/api/foundry/killchain-event', { mission_id: missionId, node_name: node.def.title, action_taken: 'STARTED' });
+
+                // Wait or wait for approval
+                if (node.def.approve) {
+                    stEl.textContent = 'APPROVAL'; stEl.style.cssText = 'background:rgba(255,170,0,0.3);color:#ffaa00;';
+                    const aprBtn = document.getElementById(`apr-${node.id}`);
+                    if (aprBtn && !aprBtn.classList.contains('approved')) {
                         await new Promise(resolve => {
-                            const check = setInterval(() => {
-                                if (approveBtn.classList.contains('approved')) { clearInterval(check); resolve(); }
-                            }, 200);
+                            aprBtn.addEventListener('click', () => {
+                                aprBtn.textContent = 'APPROVED'; aprBtn.classList.add('approved');
+                                foundryLog('APPROVAL', 'Engagement authorized', '/api/foundry/killchain-event', { mission_id: missionId, node_name: 'Engagement Auth', action_taken: 'APPROVED' });
+                                resolve();
+                            }, { once: true });
                         });
                     }
                 } else {
-                    await new Promise(r => setTimeout(r, 1500));
+                    await new Promise(r => setTimeout(r, stage.wait));
                 }
 
-                await logFoundryEvent(node.def.title, 'COMPLETED');
-                node.el.classList.remove('executing');
-                node.el.classList.add('complete');
-                statusEl.textContent = 'COMPLETE'; statusEl.style.cssText = 'background:rgba(74,222,128,0.2);color:#44ff90;';
-                node.el.querySelector('.fn-state').textContent = 'Status: Complete';
+                await foundryLog('KILLCHAIN', node.def.title, '/api/foundry/killchain-event', { mission_id: missionId, node_name: node.def.title, action_taken: 'COMPLETED' });
+                node.el.classList.remove('executing'); node.el.classList.add('complete');
+                stEl.textContent = 'COMPLETE'; stEl.style.cssText = 'background:rgba(74,222,128,0.2);color:#44ff90;';
+                stateEl.textContent = 'Complete';
             }
+
+            clearInterval(telemetryInterval);
+            dronePhase = 'rtb';
+            document.getElementById('missionTitle').textContent = 'Mission Complete';
+            document.getElementById('missionStatus').textContent = `${eventCount} events logged to Foundry`;
+            showBanner('MISSION COMPLETE', `${eventCount} Foundry events`, '#4ade80');
         });
 
-        // ═══════ FOUNDRY LOGGING ═══════
-        async function logFoundryEvent(nodeName, action) {
-            foundryEvents++;
-            document.getElementById('fbEvents').textContent = foundryEvents;
+        // ═══════ AI GENERATE ═══════
+        document.getElementById('aiGenBtn').addEventListener('click', async () => {
+            const obj = document.getElementById('objectiveInput').value.trim();
+            if (!obj) return;
+            document.getElementById('aiGenBtn').textContent = 'Generating...';
             try {
-                await fetch('/api/foundry/killchain-event', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mission_id: 'active', node_name: nodeName, action_taken: action }),
-                });
-            } catch (e) { console.warn('Foundry log error:', e); }
-        }
+                const res = await fetch('/api/generate-killchain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ objective: obj }) });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                // Clear and build
+                nodes.forEach(n => canvas.removeChild(n.el)); nodes.length = 0;
+                connections.forEach(c => svg.removeChild(c.line)); connections.length = 0;
+                let y = 40;
+                for (const type of data.nodes) { const def = DEFS[type]; if (def) { createFlowNode(type, def, 350, y); y += 110; } }
+                setTimeout(() => { for (let i = 0; i < nodes.length - 1; i++) addConnection(nodes[i].id, nodes[i + 1].id); }, 50);
+                // Set target from plan
+                if (data.plan?.target) {
+                    targetMarker.position.set(data.plan.target.x || 80, 0, data.plan.target.z || -60);
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+            document.getElementById('aiGenBtn').textContent = 'AI Generate';
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            nodes.forEach(n => canvas.removeChild(n.el)); nodes.length = 0;
+            connections.forEach(c => svg.removeChild(c.line)); connections.length = 0;
+            drones.forEach(d => scene.remove(d)); drones.length = 0;
+            targetMarker.visible = false; dronePhase = 'idle';
+            clearInterval(telemetryInterval);
+        });
 
         // ═══════ CHECK FOUNDRY ═══════
         (async () => {
+            await droneReady;
             try {
                 const res = await fetch('/api/foundry/health');
                 const data = await res.json();
-                const dot = document.getElementById('fbDot');
-                const status = document.getElementById('fbStatus');
-                if (data.configured) {
-                    dot.className = 'fb-dot ok'; status.textContent = 'Connected';
-                } else {
-                    dot.className = 'fb-dot warn'; status.textContent = 'Not configured';
-                }
+                document.getElementById('fbDot').className = 'fb-dot ' + (data.configured ? 'ok' : 'off');
+                document.getElementById('fbStatus').textContent = data.configured ? 'Connected → ' + data.url : 'Not configured';
+                if (data.configured) logToUI('SYSTEM', 'Foundry connected', '✓ ' + data.url);
             } catch (e) {
                 document.getElementById('fbDot').className = 'fb-dot off';
                 document.getElementById('fbStatus').textContent = 'Offline';

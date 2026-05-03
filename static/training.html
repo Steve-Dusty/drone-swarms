@@ -199,7 +199,8 @@
     <script type="importmap">
     { "imports": {
         "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+        "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
     }}
     </script>
 </head>
@@ -913,7 +914,6 @@
         }
 
         // ═══════ POV CARD LIVE STATUS (local, no LLM) ═══════
-        let lastCommsTexts = [];
 
         function updatePovCardStatus(s) {
             if (!s) return;
