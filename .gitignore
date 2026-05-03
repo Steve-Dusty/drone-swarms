@@ -8,3 +8,4 @@ venv/
 dist/
 build/
 .claude/
+node_modules/

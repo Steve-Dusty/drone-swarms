@@ -88,6 +88,14 @@ def generate_3d():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/config")
+def config():
+    return jsonify({
+        "mapbox_token": os.environ.get("MAPBOX_TOKEN", ""),
+        "google_maps_key": os.environ.get("GOOGLE_MAPS_API_KEY", ""),
+    })
+
+
 @app.route("/simulation")
 def simulation():
     return send_from_directory("static", "simulation.html")

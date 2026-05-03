@@ -5,313 +5,352 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drone Swarm Simulation</title>
     <style>
-        * { margin: 0; padding: 0; }
-        body { overflow: hidden; background: #000; }
-        canvas { display: block; }
-        #hud {
-            position: fixed;
-            top: 24px;
-            left: 24px;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            z-index: 10;
-            pointer-events: none;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+
+        .sidebar {
+            position: fixed; left: 0; top: 0; bottom: 0; width: 272px;
+            background: rgba(8,8,15,0.92); backdrop-filter: blur(24px);
+            border-right: 1px solid rgba(255,255,255,0.06);
+            z-index: 10; display: flex; flex-direction: column;
         }
-        #hud h2 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        .sidebar-head { padding: 22px 20px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .sidebar-head h2 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #a1a1aa; }
+        .sidebar-head p { font-size: 0.7rem; color: #52525b; margin-top: 4px; }
+        .env-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .env-list::-webkit-scrollbar { width: 4px; }
+        .env-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+        .env-card {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px; border-radius: 10px; cursor: pointer;
+            border: 1px solid transparent; transition: all 0.2s; margin-bottom: 2px;
         }
-        #hud p {
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.6);
-            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        .env-card:hover { background: rgba(255,255,255,0.04); }
+        .env-card.active { background: rgba(0,212,255,0.05); border-color: rgba(0,212,255,0.2); }
+        .env-card.loading { opacity: 0.5; pointer-events: none; }
+        .env-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .env-info { flex: 1; }
+        .env-name { font-size: 0.82rem; font-weight: 600; color: #e4e4e7; }
+        .env-type { font-size: 0.65rem; color: #71717a; margin-top: 1px; }
+
+        #overlay {
+            position: fixed; left: 272px; top: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(8,8,15,0.95); z-index: 20; transition: opacity 0.5s;
+            color: #a1a1aa; font-size: 0.9rem; gap: 16px;
         }
-        #loading {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #08080f;
-            color: #e4e4e7;
-            font-family: system-ui;
-            font-size: 1rem;
-            z-index: 100;
-            transition: opacity 0.6s;
-        }
-        #loading.done { opacity: 0; pointer-events: none; }
+        #overlay.hidden { opacity: 0; pointer-events: none; }
+        .spinner { width: 32px; height: 32px; border: 3px solid rgba(0,212,255,0.15); border-top-color: #00d4ff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #hud { position: fixed; top: 20px; right: 24px; color: #fff; z-index: 10; text-align: right; pointer-events: none; }
+        #hud h3 { font-size: 0.95rem; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.7); }
+        #hud p { font-size: 0.7rem; color: rgba(255,255,255,0.5); text-shadow: 0 1px 4px rgba(0,0,0,0.5); margin-top: 2px; }
     </style>
     <script type="importmap">
     {
         "imports": {
             "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+            "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
         }
     }
     </script>
 </head>
 <body>
-    <div id="loading">Loading drone model...</div>
-    <div id="hud">
-        <h2>Drone Swarm</h2>
-        <p>10 drones &middot; drag to orbit &middot; scroll to zoom</p>
+    <div class="sidebar">
+        <div class="sidebar-head">
+            <h2>Environments</h2>
+            <p>Google Photorealistic 3D Tiles</p>
+        </div>
+        <div class="env-list" id="envList"></div>
     </div>
+    <div id="overlay"><div class="spinner"></div><span id="loadingText">Initializing...</span></div>
+    <div id="hud"><h3 id="hudName"></h3><p id="hudMeta"></p></div>
 
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+        import {
+            TilesRenderer,
+            GoogleCloudAuthPlugin,
+            TileCompressionPlugin,
+            GLTFExtensionsPlugin,
+            ReorientationPlugin,
+        } from '/static/tiles-renderer.js';
 
-        // ── Scene ──
+        // ── ENVIRONMENTS ──
+        const ENVS = [
+            { id:'nyc',      name:'Times Square',       type:'Urban',    lat:40.7580, lng:-73.9855, alt:50, accent:'#818cf8', desc:'Manhattan, NYC' },
+            { id:'sf',       name:'Embarcadero',         type:'Urban',    lat:37.7955, lng:-122.3937,alt:45, accent:'#60a5fa', desc:'San Francisco' },
+            { id:'dc',       name:'National Mall',       type:'Urban',    lat:38.8899, lng:-77.0091, alt:60, accent:'#f9a8d4', desc:'Washington DC' },
+            { id:'tokyo',    name:'Shibuya Crossing',    type:'Urban',    lat:35.6595, lng:139.7004, alt:40, accent:'#fb923c', desc:'Tokyo, Japan' },
+            { id:'dubai',    name:'Burj Khalifa',        type:'Urban',    lat:25.1972, lng:55.2744,  alt:80, accent:'#fbbf24', desc:'Downtown Dubai' },
+            { id:'venice',   name:'Grand Canal',         type:'Coastal',  lat:45.4340, lng:12.3388,  alt:35, accent:'#22d3ee', desc:'Venice, Italy' },
+            { id:'pendleton',name:'Camp Pendleton',      type:'Military', lat:33.3050, lng:-117.354, alt:60, accent:'#4ade80', desc:'USMC, California' },
+        ];
+        const DRONE_COUNT = 10, DRONE_SCALE = 8, TRAIL_LEN = 200, CAR_TRAIL_LEN = 400;
+
+        // ── SCENE ──
         const scene = new THREE.Scene();
-        const skyColor = 0x7ec8e3;
-        scene.background = new THREE.Color(skyColor);
-        scene.fog = new THREE.FogExp2(skyColor, 0.0018);
-
-        // ── Camera ──
-        const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.5, 2000);
-        camera.position.set(120, 80, 160);
-
-        // ── Renderer ──
+        scene.background = new THREE.Color(0x87ceeb);
+        const camera = new THREE.PerspectiveCamera(60, 1, 1, 100000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(innerWidth, innerHeight);
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.3;
+        renderer.toneMappingExposure = 1.2;
         document.body.appendChild(renderer.domElement);
 
-        // ── Controls ──
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.06;
+        controls.dampingFactor = 0.08;
+        controls.minDistance = 5;
+        controls.maxDistance = 2000;
         controls.maxPolarAngle = Math.PI / 2.05;
-        controls.minDistance = 20;
-        controls.maxDistance = 400;
-        controls.target.set(0, 25, 0);
-        controls.update();
 
-        // ── Lighting ──
-        const hemi = new THREE.HemisphereLight(0x87ceeb, 0x3a5f0b, 1.2);
-        scene.add(hemi);
+        const sun = new THREE.DirectionalLight(0xffffff, 2);
+        sun.position.set(200, 400, 300); scene.add(sun);
+        scene.add(new THREE.AmbientLight(0x8899aa, 0.8));
+        scene.add(new THREE.HemisphereLight(0x87ceeb, 0x444444, 0.6));
 
-        const sun = new THREE.DirectionalLight(0xfff5e6, 3);
-        sun.position.set(150, 200, 100);
-        sun.castShadow = true;
-        sun.shadow.camera.top = 200;
-        sun.shadow.camera.bottom = -200;
-        sun.shadow.camera.left = -200;
-        sun.shadow.camera.right = 200;
-        sun.shadow.mapSize.set(2048, 2048);
-        sun.shadow.bias = -0.0005;
-        scene.add(sun);
+        function resize() {
+            const w = innerWidth - 272, h = innerHeight;
+            camera.aspect = w / h; camera.updateProjectionMatrix();
+            renderer.setSize(w, h); renderer.domElement.style.marginLeft = '272px';
+        }
+        resize(); addEventListener('resize', resize);
 
-        const ambient = new THREE.AmbientLight(0x404060, 0.4);
-        scene.add(ambient);
+        // ── DRACO ──
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
 
-        // ── Terrain noise ──
-        function terrainHeight(x, z) {
-            let h = 0;
-            h += Math.sin(x * 0.015 + 0.5) * Math.cos(z * 0.015 + 0.8) * 35;
-            h += Math.sin(x * 0.035 + 1.3) * Math.cos(z * 0.028 + 2.1) * 18;
-            h += Math.sin(x * 0.07 + 4.7) * Math.cos(z * 0.06 + 3.2) * 9;
-            h += Math.sin(x * 0.15) * Math.cos(z * 0.12) * 4;
-            h += Math.sin(x * 0.3 + 2.0) * Math.cos(z * 0.25 + 1.0) * 2;
-            return h;
+        // ── TILES ──
+        let tiles = null, activeEnvId = null, googleKey = '';
+
+        function createTiles(env) {
+            if (tiles) { scene.remove(tiles.group); tiles.dispose(); tiles = null; }
+
+            const t = new TilesRenderer();
+            t.registerPlugin(new GoogleCloudAuthPlugin({ apiToken: googleKey, autoRefreshToken: true }));
+            t.registerPlugin(new TileCompressionPlugin());
+            t.registerPlugin(new GLTFExtensionsPlugin({ dracoLoader }));
+            t.registerPlugin(new ReorientationPlugin({
+                lat: env.lat * THREE.MathUtils.DEG2RAD,
+                lon: env.lng * THREE.MathUtils.DEG2RAD,
+            }));
+            t.errorTarget = 6;
+
+            scene.add(t.group);
+            t.setCamera(camera);
+            t.setResolutionFromRenderer(camera, renderer);
+
+            t.addEventListener('load-tile-set', () => setLoading(false));
+            return t;
         }
 
-        // ── Build terrain mesh ──
-        const SIZE = 600;
-        const SEGS = 256;
-        const terrainGeo = new THREE.PlaneGeometry(SIZE, SIZE, SEGS, SEGS);
-        terrainGeo.rotateX(-Math.PI / 2);
+        // ── TARGET CAR ──
+        let car = null, carTrailLine = null;
+        const carTrailPos = [];
 
-        const pos = terrainGeo.attributes.position.array;
-        const colors = new Float32Array(pos.length);
+        function createCar() {
+            const body = new THREE.Mesh(new THREE.BoxGeometry(5, 2, 2.5),
+                new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }));
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(3, 1.2, 2.3),
+                new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }));
+            roof.position.set(-0.3, 1.5, 0);
+            const tl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.8),
+                new THREE.MeshStandardMaterial({ color: 0xff2200, emissive: 0xff2200, emissiveIntensity: 3 }));
+            tl.position.set(-2.6, 0.5, 0.7);
+            const tr = tl.clone(); tr.position.z = -0.7;
 
-        for (let i = 0; i < pos.length; i += 3) {
-            const x = pos[i], z = pos[i + 2];
-            const h = terrainHeight(x, z);
-            pos[i + 1] = h;
+            car = new THREE.Group(); car.add(body, roof, tl, tr);
+            const light = new THREE.PointLight(0xff4400, 5, 40);
+            light.position.y = 3; car.add(light);
+            scene.add(car);
 
-            // Height-based vertex color
-            const t = Math.max(0, Math.min(1, (h + 35) / 70));
-
-            let r, g, b;
-            if (t < 0.25) {
-                // Dark green valley
-                r = 0.12; g = 0.28 + t * 1.2; b = 0.08;
-            } else if (t < 0.5) {
-                // Forest green
-                const s = (t - 0.25) / 0.25;
-                r = 0.15 + s * 0.2; g = 0.55 - s * 0.1; b = 0.08 + s * 0.04;
-            } else if (t < 0.7) {
-                // Brown rock
-                const s = (t - 0.5) / 0.2;
-                r = 0.35 + s * 0.15; g = 0.30 + s * 0.05; b = 0.15 + s * 0.1;
-            } else if (t < 0.85) {
-                // Gray rock
-                const s = (t - 0.7) / 0.15;
-                const gray = 0.45 + s * 0.2;
-                r = gray; g = gray; b = gray + 0.02;
-            } else {
-                // Snow cap
-                const s = (t - 0.85) / 0.15;
-                const snow = 0.7 + s * 0.25;
-                r = snow; g = snow; b = snow + 0.03;
-            }
-
-            colors[i] = r;
-            colors[i + 1] = g;
-            colors[i + 2] = b;
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(CAR_TRAIL_LEN * 3), 3));
+            carTrailLine = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.35 }));
+            carTrailLine.frustumCulled = false;
+            scene.add(carTrailLine);
         }
 
-        terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        terrainGeo.computeVertexNormals();
+        function getCarPath(t) {
+            const s = t * 0.12;
+            return [Math.sin(s) * 80 + Math.sin(s * 2.3) * 25, 3, Math.cos(s * 0.7) * 80 + Math.cos(s * 1.8) * 20];
+        }
 
-        const terrainMat = new THREE.MeshStandardMaterial({
-            vertexColors: true,
-            roughness: 0.85,
-            metalness: 0.0,
+        // ── DRONES ──
+        let droneModel = null;
+        const drones = [], droneTrails = [], targetBeams = [];
+
+        const glbLoader = new GLTFLoader();
+        const droneReady = new Promise((res, rej) => {
+            glbLoader.load('/static/drone.glb',
+                g => { const m = g.scene; const b = new THREE.Box3().setFromObject(m); const d = b.getSize(new THREE.Vector3()); m.scale.setScalar(DRONE_SCALE / Math.max(d.x, d.y, d.z)); droneModel = m; res(); },
+                undefined, rej);
         });
-        const terrain = new THREE.Mesh(terrainGeo, terrainMat);
-        terrain.receiveShadow = true;
-        scene.add(terrain);
 
-        // ── Water plane ──
-        const waterGeo = new THREE.PlaneGeometry(SIZE, SIZE);
-        waterGeo.rotateX(-Math.PI / 2);
-        const waterMat = new THREE.MeshStandardMaterial({
-            color: 0x1a6e8a,
-            transparent: true,
-            opacity: 0.55,
-            roughness: 0.1,
-            metalness: 0.6,
-        });
-        const water = new THREE.Mesh(waterGeo, waterMat);
-        water.position.y = -8;
-        water.receiveShadow = true;
-        scene.add(water);
+        function spawnDrones(alt) {
+            for (const d of drones) scene.remove(d);
+            for (const t of droneTrails) scene.remove(t);
+            for (const b of targetBeams) scene.remove(b);
+            if (car) { scene.remove(car); scene.remove(carTrailLine); }
+            drones.length = 0; droneTrails.length = 0; targetBeams.length = 0; carTrailPos.length = 0;
+            if (!droneModel) return;
 
-        // ── Load drones ──
-        const drones = [];
-        const DRONE_COUNT = 10;
-
-        const loader = new GLTFLoader();
-        loader.load('/static/drone.glb', (gltf) => {
-            const original = gltf.scene;
-
-            // Normalize model size
-            const box = new THREE.Box3().setFromObject(original);
-            const dim = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(dim.x, dim.y, dim.z);
-            const baseScale = 4 / maxDim;
+            createCar();
 
             for (let i = 0; i < DRONE_COUNT; i++) {
-                const drone = original.clone();
-                drone.scale.setScalar(baseScale);
-
-                drone.traverse(child => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                    }
-                });
-
-                // Unique flight path parameters
+                const drone = droneModel.clone();
+                drone.traverse(c => { if (c.isMesh) c.castShadow = true; });
                 const angle = (i / DRONE_COUNT) * Math.PI * 2;
-                drone.userData.flight = {
-                    radius: 50 + Math.random() * 80,
-                    radiusY: 0.5 + Math.random() * 0.5, // ellipse ratio
-                    speed: 0.25 + Math.random() * 0.35,
-                    altitude: 35 + Math.random() * 35,
+                drone.userData.f = {
+                    orbitRadius: 35 + Math.random() * 70,
+                    orbitSpeed: 0.1 + Math.random() * 0.15,
+                    altOffset: alt * 0.6 + Math.random() * alt * 0.8,
                     phase: angle,
-                    cx: (Math.random() - 0.5) * 100,
-                    cz: (Math.random() - 0.5) * 100,
-                    wobbleAmp: 1 + Math.random() * 2,
-                    wobbleFreq: 2 + Math.random() * 2,
-                    bankStrength: 0.25 + Math.random() * 0.2,
-                    pattern: i % 3, // 0: circle, 1: ellipse, 2: figure-8
+                    wobble: 0.3 + Math.random() * 0.5,
+                    bank: 0.15 + Math.random() * 0.1,
+                    lagFactor: 0.015 + Math.random() * 0.03,
+                    currentX: 0, currentZ: 0,
                 };
+                scene.add(drone); drones.push(drone);
 
-                scene.add(drone);
-                drones.push(drone);
-            }
+                // Trail
+                const tGeo = new THREE.BufferGeometry();
+                tGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(TRAIL_LEN * 3), 3));
+                const trail = new THREE.Line(tGeo, new THREE.LineBasicMaterial({
+                    color: new THREE.Color().setHSL(0.5 + (i / DRONE_COUNT) * 0.15, 1, 0.5),
+                    transparent: true, opacity: 0.5
+                }));
+                trail.userData.positions = []; trail.frustumCulled = false;
+                scene.add(trail); droneTrails.push(trail);
 
-            // Hide loading screen
-            document.getElementById('loading').classList.add('done');
-        }, undefined, (err) => {
-            console.error('Failed to load drone:', err);
-            document.getElementById('loading').textContent = 'Failed to load drone model.';
-        });
-
-        // ── Path helpers ──
-        function getPathXZ(pattern, t, radius, radiusY) {
-            switch (pattern) {
-                case 1: // ellipse
-                    return [Math.cos(t) * radius, Math.sin(t) * radius * radiusY];
-                case 2: // figure-8
-                    return [Math.sin(t) * radius, Math.sin(t * 2) * radius * 0.4];
-                default: // circle
-                    return [Math.cos(t) * radius, Math.sin(t) * radius];
+                // Targeting beam
+                const bGeo = new THREE.BufferGeometry();
+                bGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(6), 3));
+                const beam = new THREE.Line(bGeo, new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.6 }));
+                beam.frustumCulled = false;
+                scene.add(beam); targetBeams.push(beam);
             }
         }
 
-        // ── Animate ──
-        const clock = new THREE.Clock();
+        function animateScene(elapsed) {
+            if (!car) return;
+            // Car
+            const [cx, cy, cz] = getCarPath(elapsed);
+            const [ncx, , ncz] = getCarPath(elapsed + 0.05);
+            car.position.set(cx, cy, cz);
+            car.rotation.y = Math.atan2(ncx - cx, ncz - cz);
 
+            carTrailPos.push(cx, cy, cz);
+            if (carTrailPos.length > CAR_TRAIL_LEN * 3) carTrailPos.splice(0, 3);
+            const ctP = carTrailLine.geometry.attributes.position;
+            ctP.array.fill(0);
+            for (let i = 0; i < carTrailPos.length; i++) ctP.array[i] = carTrailPos[i];
+            ctP.needsUpdate = true;
+            carTrailLine.geometry.setDrawRange(0, carTrailPos.length / 3);
+
+            // Drones
+            for (let i = 0; i < drones.length; i++) {
+                const d = drones[i], f = d.userData.f;
+                const t = elapsed * f.orbitSpeed + f.phase;
+                const ox = Math.cos(t) * f.orbitRadius, oz = Math.sin(t) * f.orbitRadius;
+                f.currentX += (cx - f.currentX) * f.lagFactor;
+                f.currentZ += (cz - f.currentZ) * f.lagFactor;
+                const dx = f.currentX + ox, dz = f.currentZ + oz;
+                const dy = f.altOffset + Math.sin(elapsed * 1.5 + i * 2) * f.wobble;
+                d.position.set(dx, dy, dz);
+                d.lookAt(cx, cy + 2, cz);
+                d.rotation.z += Math.sin(t * 2) * f.bank;
+
+                // Trail
+                const trail = droneTrails[i];
+                trail.userData.positions.push(dx, dy, dz);
+                if (trail.userData.positions.length > TRAIL_LEN * 3) trail.userData.positions.splice(0, 3);
+                const tP = trail.geometry.attributes.position;
+                tP.array.fill(0);
+                for (let j = 0; j < trail.userData.positions.length; j++) tP.array[j] = trail.userData.positions[j];
+                tP.needsUpdate = true;
+                trail.geometry.setDrawRange(0, trail.userData.positions.length / 3);
+
+                // Beam
+                const beam = targetBeams[i];
+                const bP = beam.geometry.attributes.position;
+                bP.array[0] = dx; bP.array[1] = dy; bP.array[2] = dz;
+                bP.array[3] = cx; bP.array[4] = cy + 1; bP.array[5] = cz;
+                bP.needsUpdate = true;
+                beam.material.opacity = 0.15 + Math.abs(Math.sin(elapsed * 4 + i)) * 0.5;
+            }
+        }
+
+        // ── ENV SWITCH ──
+        async function switchEnv(env) {
+            if (env.id === activeEnvId) return;
+            setLoading(true, `Loading ${env.name}...`);
+            setActiveCard(env.id, true);
+
+            tiles = createTiles(env);
+
+            const alt = env.alt;
+            camera.position.set(alt * 1.5, alt * 1.2, alt * 1.5);
+            controls.target.set(0, alt * 0.2, 0);
+            controls.update();
+
+            spawnDrones(alt);
+
+            document.getElementById('hudName').textContent = env.name;
+            document.getElementById('hudMeta').textContent =
+                `${env.type} \u00b7 ${env.lat.toFixed(2)}\u00b0, ${env.lng.toFixed(2)}\u00b0 \u00b7 ${DRONE_COUNT} drones tracking target`;
+
+            activeEnvId = env.id;
+            setActiveCard(env.id, false);
+        }
+
+        // ── UI ──
+        function setLoading(s, t) { if (t) document.getElementById('loadingText').textContent = t; document.getElementById('overlay').classList.toggle('hidden', !s); }
+        function setActiveCard(id, l) { document.querySelectorAll('.env-card').forEach(c => { c.classList.toggle('active', c.dataset.id === id); c.classList.toggle('loading', c.dataset.id === id && l); }); }
+        function buildSidebar() {
+            const list = document.getElementById('envList');
+            for (const env of ENVS) {
+                const card = document.createElement('div'); card.className = 'env-card'; card.dataset.id = env.id;
+                card.innerHTML = `<div class="env-dot" style="background:${env.accent}"></div><div class="env-info"><div class="env-name">${env.name}</div><div class="env-type">${env.type} &middot; ${env.desc}</div></div>`;
+                card.addEventListener('click', () => switchEnv(env));
+                list.appendChild(card);
+            }
+        }
+
+        // ── RENDER ──
+        const clock = new THREE.Clock();
         function animate() {
             const elapsed = clock.getElapsedTime();
-
-            for (let i = 0; i < drones.length; i++) {
-                const drone = drones[i];
-                const f = drone.userData.flight;
-                const t = elapsed * f.speed + f.phase;
-
-                // Current position
-                const [lx, lz] = getPathXZ(f.pattern, t, f.radius, f.radiusY);
-                const wx = f.cx + lx;
-                const wz = f.cz + lz;
-                const th = terrainHeight(wx, wz);
-                const wobble = Math.sin(elapsed * f.wobbleFreq + i * 1.7) * f.wobbleAmp;
-                const wy = Math.max(th + f.altitude, f.altitude * 0.6) + wobble;
-
-                drone.position.set(wx, wy, wz);
-
-                // Next position for heading
-                const nt = t + 0.015;
-                const [nlx, nlz] = getPathXZ(f.pattern, nt, f.radius, f.radiusY);
-                const nwx = f.cx + nlx;
-                const nwz = f.cz + nlz;
-
-                // Heading
-                const dx = nwx - wx;
-                const dz = nwz - wz;
-                drone.rotation.set(0, 0, 0);
-                drone.rotation.y = Math.atan2(dx, dz);
-
-                // Bank into turns
-                const cross = Math.sin(t) * f.speed;
-                drone.rotation.z = -cross * f.bankStrength;
-            }
-
+            animateScene(elapsed);
             controls.update();
+            if (tiles) {
+                camera.updateMatrixWorld();
+                tiles.setResolutionFromRenderer(camera, renderer);
+                tiles.update();
+            }
             renderer.render(scene, camera);
         }
-
         renderer.setAnimationLoop(animate);
 
-        // ── Resize ──
-        window.addEventListener('resize', () => {
-            camera.aspect = innerWidth / innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(innerWidth, innerHeight);
-        });
+        // ── INIT ──
+        (async () => {
+            try {
+                const cfg = await fetch('/api/config').then(r => r.json());
+                googleKey = cfg.google_maps_key;
+                buildSidebar();
+                await droneReady;
+                await switchEnv(ENVS[0]);
+            } catch (e) {
+                console.error('INIT ERROR:', e);
+                document.getElementById('loadingText').textContent = 'Error: ' + e.message;
+            }
+        })();
     </script>
 </body>
 </html>
