@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SplatSwarm Mapbox Simulation</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.21.0/mapbox-gl.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg: rgba(7, 11, 18, 0.78);
+      --bg-strong: rgba(5, 9, 14, 0.9);
+      --line: rgba(136, 170, 204, 0.28);
+      --text: #edf4ff;
+      --muted: #97a6bd;
+      --accent: #68f0b7;
+      --danger: #ff6b6b;
+      --warning: #ffd166;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: "SF Pro Display", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: #02070d;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+    }
+
+    #overlay-root {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .panel {
+      position: absolute;
+      background: linear-gradient(180deg, var(--bg), var(--bg-strong));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(12px);
+      pointer-events: auto;
+    }
+
+    .panel h2,
+    .panel h3,
+    .panel p {
+      margin: 0;
+    }
+
+    .headline {
+      top: 18px;
+      left: 18px;
+      width: min(460px, calc(100vw - 36px));
+      padding: 18px 18px 16px;
+    }
+
+    .headline-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .headline-subtitle {
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .right-stack {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: min(360px, calc(100vw - 36px));
+      pointer-events: none;
+    }
+
+    .right-stack .panel {
+      position: relative;
+      inset: auto;
+      width: 100%;
+      padding: 14px 16px;
+      pointer-events: auto;
+    }
+
+    .bottom-left {
+      left: 18px;
+      bottom: 18px;
+      width: min(420px, calc(100vw - 36px));
+      padding: 14px 16px 16px;
+    }
+
+    .bottom-center {
+      left: 50%;
+      bottom: 18px;
+      width: min(620px, calc(100vw - 36px));
+      transform: translateX(-50%);
+      padding: 14px 16px 16px;
+    }
+
+    .pill-row,
+    .button-row,
+    .metric-row,
+    .label-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      line-height: 1;
+      border: 1px solid rgba(136, 170, 204, 0.22);
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .pill strong {
+      color: var(--accent);
+    }
+
+    .button-row {
+      margin-top: 12px;
+    }
+
+    button,
+    select,
+    textarea,
+    input {
+      font: inherit;
+    }
+
+    button,
+    .button-like {
+      border: 1px solid rgba(136, 170, 204, 0.22);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+
+    button:hover,
+    select:hover,
+    textarea:hover,
+    input:hover {
+      border-color: rgba(104, 240, 183, 0.4);
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+
+    button.active {
+      background: rgba(104, 240, 183, 0.16);
+      border-color: rgba(104, 240, 183, 0.6);
+      color: #dffef1;
+    }
+
+    button.warn {
+      color: #20150a;
+      background: rgba(255, 209, 102, 0.85);
+      border-color: rgba(255, 209, 102, 1);
+    }
+
+    button.danger {
+      color: #fff5f5;
+      background: rgba(255, 107, 107, 0.14);
+      border-color: rgba(255, 107, 107, 0.55);
+    }
+
+    select,
+    textarea,
+    input {
+      width: 100%;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(136, 170, 204, 0.22);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    textarea {
+      min-height: 78px;
+      resize: vertical;
+    }
+
+    .section-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .metric-row {
+      margin-top: 8px;
+    }
+
+    .metric {
+      flex: 1 1 110px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(136, 170, 204, 0.16);
+    }
+
+    .metric-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .metric-value {
+      margin-top: 6px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .status-good {
+      color: var(--accent);
+    }
+
+    .status-bad {
+      color: var(--danger);
+    }
+
+    .status-warn {
+      color: var(--warning);
+    }
+
+    .timeline {
+      max-height: 180px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      padding-right: 4px;
+    }
+
+    .timeline-item {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(136, 170, 204, 0.14);
+      font-size: 12px;
+      line-height: 1.4;
+      color: #e3ebf9;
+    }
+
+    .timeline-time {
+      color: var(--muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .telemetry-bar {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .telemetry-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #56c8ff, var(--accent));
+      transition: width 160ms linear;
+    }
+
+    .ship-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(130, 18, 30, 0.82);
+      border: 1px solid rgba(255, 128, 128, 0.6);
+      color: #fff3f3;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+    }
+
+    .error-banner {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(560px, calc(100vw - 36px));
+      padding: 18px 20px;
+      text-align: center;
+      border-color: rgba(255, 107, 107, 0.35);
+      background: rgba(25, 7, 9, 0.92);
+      display: none;
+    }
+
+    .small-note {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    @media (max-width: 960px) {
+      .headline {
+        width: calc(100vw - 36px);
+      }
+
+      .right-stack {
+        top: auto;
+        bottom: 18px;
+        right: 18px;
+        width: min(360px, calc(100vw - 36px));
+      }
+
+      .bottom-center {
+        left: 18px;
+        right: 18px;
+        transform: none;
+        width: auto;
+        bottom: 240px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .headline,
+      .bottom-left,
+      .bottom-center {
+        width: calc(100vw - 24px);
+        left: 12px;
+        right: 12px;
+      }
+
+      .headline {
+        top: 12px;
+      }
+
+      .bottom-left {
+        bottom: 12px;
+      }
+
+      .bottom-center {
+        bottom: 210px;
+      }
+
+      .right-stack {
+        left: 12px;
+        right: 12px;
+        bottom: 220px;
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="overlay-root">
+    <section class="panel headline">
+      <div class="headline-title">Taiwan Strait Terrain Ops</div>
+      <p class="headline-subtitle">Mapbox satellite terrain with a Three.js drone overlay. The map owns the terrain and camera. Drones, SAM sites, target ships, and tactical symbology render as WebGL overlay content synced to the map frame.</p>
+      <div class="pill-row" style="margin-top: 12px;">
+        <div class="pill">Mode <strong id="mode-pill">SPLATSWARM</strong></div>
+        <div class="pill">Target <strong id="target-pill">VESSEL-2</strong></div>
+        <div class="pill">Formation <strong id="formation-pill">Delta</strong></div>
+      </div>
+      <div class="button-row">
+        <button id="smart-mode-btn" class="active">SPLATSWARM</button>
+        <button id="dumb-mode-btn">DUMB SWARM</button>
+        <button id="tactical-view-btn">Tactical View</button>
+        <button id="follow-swarm-btn">Follow Swarm</button>
+      </div>
+    </section>
+
+    <div class="right-stack">
+      <section class="panel">
+        <div class="section-title">Voice Mission</div>
+        <textarea id="mission-input" placeholder="Say or type: Scout the western ships, stay low below ridge cover, engage only after approval."></textarea>
+        <div class="button-row">
+          <button id="run-mission-btn">Run Mission</button>
+          <button id="voice-mission-btn">Start Voice Mission</button>
+        </div>
+        <p class="small-note" id="voice-status">Voice ready. Spoken commands map into target ship, formation, and swarm mode.</p>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">Environment Selector</div>
+        <select id="terrain-exaggeration-select">
+          <option value="1.2">Operational Relief</option>
+          <option value="2" selected>Mission Relief x2</option>
+          <option value="2.8">Cinematic Relief x2.8</option>
+        </select>
+        <div class="button-row" style="margin-top: 10px;">
+          <button id="sweep-bearing-btn">Sweep Bearing</button>
+          <button id="reset-camera-btn">Reset Camera</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">Formation Selector</div>
+        <select id="formation-select">
+          <option value="delta" selected>Delta</option>
+          <option value="swarm">Swarm</option>
+          <option value="perimeter">Perimeter</option>
+          <option value="grid">Grid</option>
+          <option value="helix">Helix</option>
+        </select>
+        <div class="small-note" id="routing-note">Terrain-aware mode keeps the swarm lower and tries not to crest into direct SAM line of sight.</div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">Foundry Stream</div>
+        <div class="metric-row">
+          <div class="metric">
+            <div class="metric-label">Sync Status</div>
+            <div class="metric-value status-warn" id="foundry-status">Disconnected</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Event Count</div>
+            <div class="metric-value" id="event-count">0</div>
+          </div>
+        </div>
+        <p class="small-note">This page keeps the panel as HTML overlay. Wire it to your existing Foundry endpoints if you want live logging on this route too.</p>
+      </section>
+    </div>
+
+    <section class="panel bottom-left">
+      <div class="section-title">Telemetry Bar</div>
+      <div class="telemetry-bar"><div class="telemetry-fill" id="telemetry-fill"></div></div>
+      <div class="metric-row">
+        <div class="metric">
+          <div class="metric-label">Active Drones</div>
+          <div class="metric-value" id="active-count">16</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Losses</div>
+          <div class="metric-value status-bad" id="loss-count">0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">SAM Exposure</div>
+          <div class="metric-value status-warn" id="exposure-count">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel bottom-center">
+      <div class="section-title">Mission Timeline</div>
+      <div class="timeline" id="mission-timeline"></div>
+    </section>
+
+    <section class="panel error-banner" id="error-banner">
+      <h3 id="error-title">Mapbox Token Required</h3>
+      <p class="small-note" id="error-detail">Replace <code>[INSERT TOKEN]</code> in this file or append <code>?mapboxToken=YOUR_TOKEN</code> to the URL.</p>
+    </section>
+  </div>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.21.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script>
+    const DEFAULT_MAPBOX_TOKEN = "[INSERT TOKEN]";
+    const MAPBOX_STYLE = "mapbox://styles/mapbox/satellite-v9";
+    const MAPBOX_DEM_URL = "mapbox://mapbox.mapbox-terrain-dem-v1";
+    const MAP_CENTER = [121.0, 24.5];
+    const SWARM_START = { lng: 120.8, lat: 24.8 };
+    const SAM_LOCATION = { lng: 121.1, lat: 24.6 };
+    const INITIAL_CAMERA = { center: MAP_CENTER, zoom: 10, pitch: 60, bearing: -20 };
+    const SAM_RADIUS_METERS = 15000;
+    const DRONE_COUNT = 16;
+    const UPDATE_EVERY_N_FRAMES = 2;
+
+    const shipDefs = [
+      { id: "VESSEL-1", lng: 121.44, lat: 24.34 },
+      { id: "VESSEL-2", lng: 121.52, lat: 24.29 },
+      { id: "VESSEL-3", lng: 121.58, lat: 24.36 },
+      { id: "VESSEL-4", lng: 121.47, lat: 24.24 }
+    ];
+
+    const ui = {
+      modePill: document.getElementById("mode-pill"),
+      targetPill: document.getElementById("target-pill"),
+      formationPill: document.getElementById("formation-pill"),
+      smartModeBtn: document.getElementById("smart-mode-btn"),
+      dumbModeBtn: document.getElementById("dumb-mode-btn"),
+      tacticalViewBtn: document.getElementById("tactical-view-btn"),
+      followSwarmBtn: document.getElementById("follow-swarm-btn"),
+      runMissionBtn: document.getElementById("run-mission-btn"),
+      voiceMissionBtn: document.getElementById("voice-mission-btn"),
+      missionInput: document.getElementById("mission-input"),
+      voiceStatus: document.getElementById("voice-status"),
+      terrainExaggerationSelect: document.getElementById("terrain-exaggeration-select"),
+      sweepBearingBtn: document.getElementById("sweep-bearing-btn"),
+      resetCameraBtn: document.getElementById("reset-camera-btn"),
+      formationSelect: document.getElementById("formation-select"),
+      routingNote: document.getElementById("routing-note"),
+      foundryStatus: document.getElementById("foundry-status"),
+      eventCount: document.getElementById("event-count"),
+      telemetryFill: document.getElementById("telemetry-fill"),
+      activeCount: document.getElementById("active-count"),
+      lossCount: document.getElementById("loss-count"),
+      exposureCount: document.getElementById("exposure-count"),
+      timeline: document.getElementById("mission-timeline"),
+      errorBanner: document.getElementById("error-banner"),
+      errorTitle: document.getElementById("error-title"),
+      errorDetail: document.getElementById("error-detail"),
+      overlayRoot: document.getElementById("overlay-root")
+    };
+
+    const state = {
+      map: null,
+      renderer: null,
+      scene: null,
+      camera: null,
+      root: null,
+      originMercator: null,
+      unitsPerMeter: 1,
+      labels: new Map(),
+      ships: [],
+      drones: [],
+      sam: {
+        lng: SAM_LOCATION.lng,
+        lat: SAM_LOCATION.lat,
+        terrain: 0,
+        mastAltitude: 60
+      },
+      objects: {
+        droneMesh: null,
+        samPulse: null,
+        samCone: null,
+        shipMeshes: [],
+        reticles: []
+      },
+      frame: 0,
+      lastTime: 0,
+      followSwarm: false,
+      sweepBearing: false,
+      currentBearingSweep: INITIAL_CAMERA.bearing,
+      currentMission: {
+        text: "Attack the western vessel while staying under ridge cover.",
+        mode: "smart",
+        formation: "delta",
+        targetShipId: "VESSEL-2",
+        approvalRequired: true
+      },
+      timeline: [],
+      exposureNow: 0,
+      losses: 0
+    };
+
+    function nowStamp() {
+      return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    }
+
+    function showError(title, detail) {
+      ui.errorTitle.textContent = title;
+      ui.errorDetail.innerHTML = detail;
+      ui.errorBanner.style.display = "block";
+    }
+
+    function hideError() {
+      ui.errorBanner.style.display = "none";
+    }
+
+    function addTimelineEntry(text, tone) {
+      state.timeline.unshift({ text, tone, time: nowStamp() });
+      state.timeline = state.timeline.slice(0, 10);
+      ui.timeline.innerHTML = state.timeline.map((item) => {
+        const klass = item.tone === "danger" ? "status-bad" : item.tone === "warn" ? "status-warn" : "status-good";
+        return `<div class="timeline-item"><span class="timeline-time">${item.time}</span><span class="${klass}">${item.text}</span></div>`;
+      }).join("");
+      ui.eventCount.textContent = String(state.timeline.length);
+    }
+
+    function setFoundryStatus(label, klass) {
+      ui.foundryStatus.textContent = label;
+      ui.foundryStatus.className = `metric-value ${klass}`;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function normalizeAngleDeg(angle) {
+      let value = angle % 360;
+      if (value < 0) value += 360;
+      return value;
+    }
+
+    function distanceMeters(a, b) {
+      const earthRadius = 6371000;
+      const lat1 = a.lat * Math.PI / 180;
+      const lat2 = b.lat * Math.PI / 180;
+      const dLat = (b.lat - a.lat) * Math.PI / 180;
+      const dLng = (b.lng - a.lng) * Math.PI / 180;
+      const sinLat = Math.sin(dLat / 2);
+      const sinLng = Math.sin(dLng / 2);
+      const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng;
+      return 2 * earthRadius * Math.asin(Math.sqrt(h));
+    }
+
+    function bearingDeg(a, b) {
+      const lat1 = a.lat * Math.PI / 180;
+      const lat2 = b.lat * Math.PI / 180;
+      const dLng = (b.lng - a.lng) * Math.PI / 180;
+      const y = Math.sin(dLng) * Math.cos(lat2);
+      const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+      return normalizeAngleDeg(Math.atan2(y, x) * 180 / Math.PI);
+    }
+
+    function offsetLngLat(base, eastMeters, northMeters) {
+      const earthRadius = 6378137;
+      const dLat = (northMeters / earthRadius) * (180 / Math.PI);
+      const dLng = (eastMeters / (earthRadius * Math.cos(base.lat * Math.PI / 180))) * (180 / Math.PI);
+      return { lng: base.lng + dLng, lat: base.lat + dLat };
+    }
+
+    function getTerrainElevation(lng, lat) {
+      if (!state.map) return 0;
+      const value = state.map.queryTerrainElevation({ lng, lat }, { exaggerated: false });
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function lngLatToWorld(lng, lat, altitude) {
+      const coord = mapboxgl.MercatorCoordinate.fromLngLat({ lng, lat }, altitude);
+      return new THREE.Vector3(
+        (coord.x - state.originMercator.x) / state.unitsPerMeter,
+        (state.originMercator.y - coord.y) / state.unitsPerMeter,
+        (coord.z - state.originMercator.z) / state.unitsPerMeter
+      );
+    }
+
+    function projectLabelPosition(lng, lat) {
+      const lngLat = { lng, lat };
+      return state.map.project(lngLat);
+    }
+
+    function ensureShipLabels() {
+      shipDefs.forEach((ship) => {
+        if (state.labels.has(ship.id)) return;
+        const label = document.createElement("div");
+        label.className = "ship-label";
+        label.textContent = ship.id;
+        ui.overlayRoot.appendChild(label);
+        state.labels.set(ship.id, label);
+      });
+    }
+
+    function updateShipLabels() {
+      shipDefs.forEach((ship) => {
+        const label = state.labels.get(ship.id);
+        if (!label) return;
+        const point = projectLabelPosition(ship.lng, ship.lat);
+        const inView = point.x >= -100 && point.x <= window.innerWidth + 100 && point.y >= -100 && point.y <= window.innerHeight + 100;
+        label.style.display = inView ? "block" : "none";
+        label.style.left = `${point.x}px`;
+        label.style.top = `${point.y}px`;
+      });
+    }
+
+    function getFormationOffsets(type, count, timeSeconds) {
+      const offsets = [];
+      if (type === "grid") {
+        const side = Math.ceil(Math.sqrt(count));
+        const spacing = 220;
+        for (let i = 0; i < count; i += 1) {
+          const col = i % side;
+          const row = Math.floor(i / side);
+          offsets.push({ east: (col - (side - 1) / 2) * spacing, north: ((side - 1) / 2 - row) * spacing });
+        }
+        return offsets;
+      }
+
+      if (type === "perimeter") {
+        const radius = 320;
+        for (let i = 0; i < count; i += 1) {
+          const angle = (i / count) * Math.PI * 2;
+          offsets.push({ east: Math.cos(angle) * radius, north: Math.sin(angle) * radius });
+        }
+        return offsets;
+      }
+
+      if (type === "helix") {
+        for (let i = 0; i < count; i += 1) {
+          const angle = (i / count) * Math.PI * 2 + timeSeconds * 0.8;
+          const radius = 140 + i * 12;
+          offsets.push({ east: Math.cos(angle) * radius, north: Math.sin(angle) * radius });
+        }
+        return offsets;
+      }
+
+      if (type === "swarm") {
+        for (let i = 0; i < count; i += 1) {
+          const angle = i * 0.65 + timeSeconds * 0.9;
+          const radius = 90 + (i % 5) * 42;
+          offsets.push({ east: Math.cos(angle) * radius, north: Math.sin(angle) * radius });
+        }
+        return offsets;
+      }
+
+      const spacing = 180;
+      for (let i = 0; i < count; i += 1) {
+        const row = Math.floor((i + 1) / 2);
+        const side = i % 2 === 0 ? -1 : 1;
+        if (i === 0) {
+          offsets.push({ east: 0, north: 0 });
+        } else {
+          offsets.push({ east: side * row * spacing, north: -row * spacing * 1.15 });
+        }
+      }
+      return offsets;
+    }
+
+    function getMissionTarget() {
+      return state.ships.find((ship) => ship.id === state.currentMission.targetShipId) || state.ships[1];
+    }
+
+    function resetDrones() {
+      state.drones = Array.from({ length: DRONE_COUNT }, (_, index) => {
+        const seed = index / DRONE_COUNT;
+        const base = offsetLngLat(SWARM_START, (index % 4 - 1.5) * 120, (Math.floor(index / 4) - 1.5) * 120);
+        return {
+          id: `DRONE-${String(index + 1).padStart(2, "0")}`,
+          lng: base.lng,
+          lat: base.lat,
+          altitudeAgl: 95 + seed * 40,
+          altitudeMsl: 0,
+          heading: 120,
+          alive: true,
+          detected: false,
+          fallVelocity: 0,
+          color: new THREE.Color(0x68f0b7)
+        };
+      });
+      state.losses = 0;
+      state.exposureNow = 0;
+      addTimelineEntry("Swarm reset at maritime ingress point.", "ok");
+      updateUi();
+    }
+
+    function chooseShipByDirection(direction) {
+      const ships = [...state.ships];
+      if (!ships.length) return "VESSEL-2";
+      if (direction === "west") ships.sort((a, b) => a.lng - b.lng);
+      if (direction === "east") ships.sort((a, b) => b.lng - a.lng);
+      if (direction === "north") ships.sort((a, b) => b.lat - a.lat);
+      if (direction === "south") ships.sort((a, b) => a.lat - b.lat);
+      return ships[0].id;
+    }
+
+    function parseMissionIntent(text) {
+      const normalized = (text || "").trim();
+      const lower = normalized.toLowerCase();
+      const mission = {
+        text: normalized || "Attack the western vessel while staying under ridge cover.",
+        mode: /dumb|direct|fast|straight/.test(lower) ? "dumb" : "smart",
+        formation: /grid/.test(lower) ? "grid" : /perimeter|ring/.test(lower) ? "perimeter" : /helix|spiral/.test(lower) ? "helix" : /swarm/.test(lower) ? "swarm" : "delta",
+        targetShipId: state.currentMission.targetShipId,
+        approvalRequired: /approval|authorize|permission/.test(lower)
+      };
+
+      if (/vessel-1|ship 1|first ship/.test(lower)) mission.targetShipId = "VESSEL-1";
+      else if (/vessel-2|ship 2|second ship/.test(lower)) mission.targetShipId = "VESSEL-2";
+      else if (/vessel-3|ship 3|third ship/.test(lower)) mission.targetShipId = "VESSEL-3";
+      else if (/vessel-4|ship 4|fourth ship/.test(lower)) mission.targetShipId = "VESSEL-4";
+      else if (/west|western|port side/.test(lower)) mission.targetShipId = chooseShipByDirection("west");
+      else if (/east|eastern/.test(lower)) mission.targetShipId = chooseShipByDirection("east");
+      else if (/north|northern/.test(lower)) mission.targetShipId = chooseShipByDirection("north");
+      else if (/south|southern/.test(lower)) mission.targetShipId = chooseShipByDirection("south");
+
+      if (/cover|terrain|valley|mask|stealth|low observable|avoid sam|ridge/.test(lower)) {
+        mission.mode = "smart";
+      }
+
+      return mission;
+    }
+
+    function applyMission(mission) {
+      state.currentMission = mission;
+      ui.missionInput.value = mission.text;
+      ui.formationSelect.value = mission.formation;
+      ui.modePill.textContent = mission.mode === "smart" ? "SPLATSWARM" : "DUMB SWARM";
+      ui.targetPill.textContent = mission.targetShipId;
+      ui.formationPill.textContent = mission.formation[0].toUpperCase() + mission.formation.slice(1);
+      ui.smartModeBtn.classList.toggle("active", mission.mode === "smart");
+      ui.dumbModeBtn.classList.toggle("active", mission.mode === "dumb");
+      ui.routingNote.textContent = mission.mode === "smart"
+        ? "Terrain-aware route bias active: lower altitude, looser turns near ridgelines, delayed pop-up before terminal approach."
+        : "Naive route active: straight ingress, higher altitude profile, no terrain masking bias.";
+      addTimelineEntry(`Mission accepted: ${mission.text}`, "ok");
+      if (mission.approvalRequired) {
+        addTimelineEntry("Engagement authorization checkpoint inserted before terminal run.", "warn");
+      }
+      resetDrones();
+      updateUi();
+    }
+
+    function updateUi() {
+      const alive = state.drones.filter((drone) => drone.alive).length;
+      const ratio = alive / Math.max(1, DRONE_COUNT);
+      ui.activeCount.textContent = String(alive);
+      ui.lossCount.textContent = String(state.losses);
+      ui.exposureCount.textContent = String(state.exposureNow);
+      ui.telemetryFill.style.width = `${Math.round(ratio * 100)}%`;
+      setFoundryStatus("Overlay Ready", "status-good");
+    }
+
+    function buildShips() {
+      state.ships = shipDefs.map((ship) => ({
+        ...ship,
+        terrain: getTerrainElevation(ship.lng, ship.lat)
+      }));
+    }
+
+    function buildThreeScene(map, gl) {
+      state.renderer = new THREE.WebGLRenderer({
+        canvas: map.getCanvas(),
+        context: gl,
+        antialias: true
+      });
+      state.renderer.autoClear = false;
+      state.renderer.shadowMap.enabled = false;
+      state.scene = new THREE.Scene();
+      state.camera = new THREE.Camera();
+      state.root = new THREE.Group();
+      state.scene.add(state.root);
+
+      const ambient = new THREE.AmbientLight(0xc6ddff, 1.35);
+      const sun = new THREE.DirectionalLight(0xffffff, 1.15);
+      sun.position.set(-6000, 8000, 14000);
+      state.scene.add(ambient, sun);
+
+      const coneGeo = new THREE.ConeGeometry(22, 70, 6);
+      coneGeo.rotateZ(-Math.PI / 2);
+      const droneMaterial = new THREE.MeshStandardMaterial({
+        color: 0x68f0b7,
+        emissive: 0x12372a,
+        roughness: 0.38,
+        metalness: 0.08
+      });
+      state.objects.droneMesh = new THREE.InstancedMesh(coneGeo, droneMaterial, DRONE_COUNT);
+      state.objects.droneMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      state.root.add(state.objects.droneMesh);
+
+      const samPulse = new THREE.Mesh(
+        new THREE.SphereGeometry(90, 24, 24),
+        new THREE.MeshBasicMaterial({ color: 0xff5d5d, transparent: true, opacity: 0.9 })
+      );
+      state.objects.samPulse = samPulse;
+      state.root.add(samPulse);
+
+      const samCone = new THREE.Mesh(
+        new THREE.ConeGeometry(15000, 9000, 40, 1, true),
+        new THREE.MeshBasicMaterial({
+          color: 0xff3b3b,
+          transparent: true,
+          opacity: 0.12,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        })
+      );
+      samCone.rotation.x = Math.PI;
+      samCone.position.z = 4500;
+      state.objects.samCone = samCone;
+      state.root.add(samCone);
+
+      state.objects.shipMeshes = [];
+      state.objects.reticles = [];
+      shipDefs.forEach(() => {
+        const shipMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(240, 70, 40),
+          new THREE.MeshStandardMaterial({ color: 0xbfc6cf, roughness: 0.75, metalness: 0.18 })
+        );
+        const reticle = new THREE.Mesh(
+          new THREE.TorusGeometry(140, 8, 12, 48),
+          new THREE.MeshBasicMaterial({ color: 0xff5757 })
+        );
+        reticle.rotation.x = Math.PI / 2;
+        state.root.add(shipMesh);
+        state.root.add(reticle);
+        state.objects.shipMeshes.push(shipMesh);
+        state.objects.reticles.push(reticle);
+      });
+    }
+
+    function updateStaticWorldObjects(timeSeconds) {
+      const samTerrain = getTerrainElevation(state.sam.lng, state.sam.lat);
+      state.sam.terrain = samTerrain;
+      const samBase = lngLatToWorld(state.sam.lng, state.sam.lat, samTerrain + 40);
+      state.objects.samPulse.position.copy(samBase);
+      const pulseScale = 1 + Math.sin(timeSeconds * 4) * 0.2;
+      state.objects.samPulse.scale.setScalar(pulseScale);
+      state.objects.samPulse.material.opacity = 0.48 + Math.sin(timeSeconds * 4) * 0.22;
+
+      state.objects.samCone.position.set(samBase.x, samBase.y, samBase.z + 4500);
+
+      state.ships.forEach((ship, index) => {
+        ship.terrain = getTerrainElevation(ship.lng, ship.lat);
+        const position = lngLatToWorld(ship.lng, ship.lat, ship.terrain + 20);
+        const mesh = state.objects.shipMeshes[index];
+        const reticle = state.objects.reticles[index];
+        mesh.position.copy(position);
+        mesh.rotation.z = 0.18;
+        reticle.position.set(position.x, position.y, position.z + 25);
+        const targetBoost = ship.id === state.currentMission.targetShipId ? 1.35 : 1.0;
+        reticle.scale.setScalar(targetBoost + Math.sin(timeSeconds * 3 + index) * 0.08);
+      });
+    }
+
+    function terrainAwareBias(drone, target, timeSeconds) {
+      if (state.currentMission.mode !== "smart") {
+        return { east: 0, north: 0, altitudeAgl: 180 };
+      }
+
+      const lanePhase = (Number(drone.id.slice(-2)) % 5) / 4;
+      const oscillation = Math.sin(timeSeconds * 0.6 + lanePhase * Math.PI * 2) * 120;
+      const toSam = {
+        lng: target.lng - state.sam.lng,
+        lat: target.lat - state.sam.lat
+      };
+      const sidestepEast = -Math.sign(toSam.lng || 1) * 180 + oscillation;
+      const sidestepNorth = 140 + Math.cos(timeSeconds * 0.35 + lanePhase * 4) * 90;
+      const altitudeAgl = 65 + lanePhase * 18;
+      return { east: sidestepEast, north: sidestepNorth, altitudeAgl };
+    }
+
+    function getDesiredPoint(drone, offset, timeSeconds) {
+      const target = getMissionTarget();
+      const smartBias = terrainAwareBias(drone, target, timeSeconds);
+      const lateral = offsetLngLat(target, offset.east + smartBias.east, offset.north + smartBias.north);
+      return {
+        lng: lateral.lng,
+        lat: lateral.lat,
+        altitudeAgl: state.currentMission.mode === "smart" ? smartBias.altitudeAgl : 160 + (Number(drone.id.slice(-2)) % 4) * 12
+      };
+    }
+
+    function hasTerrainLineOfSight(from, to, droneAbsoluteAltitude) {
+      const steps = 18;
+      const samAbsoluteAltitude = getTerrainElevation(from.lng, from.lat) + state.sam.mastAltitude;
+      for (let i = 1; i < steps; i += 1) {
+        const t = i / steps;
+        const lng = lerp(from.lng, to.lng, t);
+        const lat = lerp(from.lat, to.lat, t);
+        const lineAltitude = lerp(samAbsoluteAltitude, droneAbsoluteAltitude, t);
+        const terrain = getTerrainElevation(lng, lat);
+        if (terrain > lineAltitude - 12) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function updateDroneSimulation(deltaSeconds, timeSeconds) {
+      const target = getMissionTarget();
+      const formationOffsets = getFormationOffsets(state.currentMission.formation, state.drones.length, timeSeconds);
+      let exposures = 0;
+
+      state.drones.forEach((drone, index) => {
+        if (!drone.alive) {
+          drone.fallVelocity += 9.81 * deltaSeconds * 18;
+          drone.altitudeMsl = Math.max(getTerrainElevation(drone.lng, drone.lat), drone.altitudeMsl - drone.fallVelocity * deltaSeconds);
+          return;
+        }
+
+        const desired = getDesiredPoint(drone, formationOffsets[index], timeSeconds);
+        const stepLng = clamp(desired.lng - drone.lng, -0.0026 * deltaSeconds, 0.0026 * deltaSeconds);
+        const stepLat = clamp(desired.lat - drone.lat, -0.0022 * deltaSeconds, 0.0022 * deltaSeconds);
+        drone.lng += stepLng;
+        drone.lat += stepLat;
+        const terrain = getTerrainElevation(drone.lng, drone.lat);
+        drone.altitudeAgl = lerp(drone.altitudeAgl, desired.altitudeAgl, 0.06);
+        drone.altitudeMsl = terrain + drone.altitudeAgl;
+        drone.heading = bearingDeg({ lng: drone.lng - stepLng, lat: drone.lat - stepLat }, { lng: drone.lng, lat: drone.lat });
+
+        const distToSam = distanceMeters({ lng: drone.lng, lat: drone.lat }, { lng: state.sam.lng, lat: state.sam.lat });
+        const los = distToSam <= SAM_RADIUS_METERS && hasTerrainLineOfSight(state.sam, drone, drone.altitudeMsl);
+        drone.detected = los;
+
+        if (los) {
+          exposures += 1;
+          const killChance = state.currentMission.mode === "smart" ? 0.00065 : 0.0032;
+          if (Math.random() < killChance * deltaSeconds * 60) {
+            drone.alive = false;
+            drone.detected = false;
+            state.losses += 1;
+            addTimelineEntry(`${drone.id} lost to coastal SAM line of sight.`, "danger");
+          }
+        }
+
+        const distToTarget = distanceMeters({ lng: drone.lng, lat: drone.lat }, target);
+        if (distToTarget < 380 && state.currentMission.approvalRequired) {
+          state.currentMission.approvalRequired = false;
+          addTimelineEntry("Engagement authorization granted. Terminal run cleared.", "warn");
+        }
+      });
+
+      state.exposureNow = exposures;
+      if (state.followSwarm) {
+        const centroid = getSwarmCentroid();
+        state.map.easeTo({ center: [centroid.lng, centroid.lat], duration: 250, essential: true });
+      }
+
+      if (state.sweepBearing) {
+        state.currentBearingSweep += deltaSeconds * 6;
+        state.map.setBearing(state.currentBearingSweep);
+      }
+    }
+
+    function updateDroneInstances() {
+      const upAxis = new THREE.Vector3(0, 0, 1);
+      const quaternion = new THREE.Quaternion();
+      const scale = new THREE.Vector3(1, 1, 1);
+      const matrix = new THREE.Matrix4();
+      const detectedColor = new THREE.Color(0xff6b6b);
+      const safeColor = new THREE.Color(0x68f0b7);
+      const lostColor = new THREE.Color(0x5a6475);
+
+      state.drones.forEach((drone, index) => {
+        const position = lngLatToWorld(drone.lng, drone.lat, drone.altitudeMsl);
+        quaternion.setFromAxisAngle(upAxis, THREE.MathUtils.degToRad(90 - drone.heading));
+        if (!drone.alive) {
+          quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI * 0.35));
+        }
+        matrix.compose(position, quaternion, scale);
+        state.objects.droneMesh.setMatrixAt(index, matrix);
+        state.objects.droneMesh.setColorAt(index, drone.alive ? (drone.detected ? detectedColor : safeColor) : lostColor);
+      });
+
+      state.objects.droneMesh.instanceMatrix.needsUpdate = true;
+      if (state.objects.droneMesh.instanceColor) {
+        state.objects.droneMesh.instanceColor.needsUpdate = true;
+      }
+    }
+
+    function getSwarmCentroid() {
+      const alive = state.drones.filter((drone) => drone.alive);
+      const pool = alive.length ? alive : state.drones;
+      const sums = pool.reduce((acc, drone) => {
+        acc.lng += drone.lng;
+        acc.lat += drone.lat;
+        return acc;
+      }, { lng: 0, lat: 0 });
+      return { lng: sums.lng / pool.length, lat: sums.lat / pool.length };
+    }
+
+    function animateTacticalView() {
+      state.map.easeTo({
+        center: MAP_CENTER,
+        zoom: 11,
+        pitch: 75,
+        bearing: -48,
+        duration: 2400,
+        essential: true
+      });
+    }
+
+    function initMap() {
+      const searchParams = new URLSearchParams(window.location.search);
+      const token = searchParams.get("mapboxToken") || window.MAPBOX_TOKEN || DEFAULT_MAPBOX_TOKEN;
+
+      if (!token || token.includes("[INSERT TOKEN]")) {
+        showError("Mapbox Token Required", "Replace <code>[INSERT TOKEN]</code> inside <code>mapbox-simulation.html</code> or open this page with <code>?mapboxToken=YOUR_TOKEN</code>.");
+        return;
+      }
+
+      mapboxgl.accessToken = token;
+
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: MAPBOX_STYLE,
+        center: INITIAL_CAMERA.center,
+        zoom: INITIAL_CAMERA.zoom,
+        pitch: INITIAL_CAMERA.pitch,
+        bearing: INITIAL_CAMERA.bearing,
+        antialias: true,
+        projection: "mercator"
+      });
+
+      state.map = map;
+
+      map.on("error", (event) => {
+        const message = event && event.error && event.error.message ? event.error.message : "";
+        if (/access token|unauthorized|forbidden|401|403/i.test(message)) {
+          showError("Mapbox Authentication Error", `Map failed to load. Check your token. Error: <code>${message}</code>`);
+        }
+      });
+
+      map.on("style.load", () => {
+        hideError();
+        if (!map.getSource("mapbox-dem")) {
+          map.addSource("mapbox-dem", {
+            type: "raster-dem",
+            url: MAPBOX_DEM_URL,
+            tileSize: 512,
+            maxzoom: 14
+          });
+        }
+        map.setTerrain({ source: "mapbox-dem", exaggeration: 2.0 });
+        map.setFog({
+          range: [-0.2, 2.4],
+          color: "#b7d4ff",
+          "high-color": "#0f2d52",
+          "space-color": "#020814",
+          "star-intensity": 0.08
+        });
+
+        state.originMercator = mapboxgl.MercatorCoordinate.fromLngLat({ lng: MAP_CENTER[0], lat: MAP_CENTER[1] }, 0);
+        state.unitsPerMeter = state.originMercator.meterInMercatorCoordinateUnits();
+
+        buildShips();
+        ensureShipLabels();
+        resetDrones();
+
+        const customLayer = {
+          id: "three-overlay",
+          type: "custom",
+          renderingMode: "3d",
+          onAdd(mapRef, gl) {
+            buildThreeScene(mapRef, gl);
+            addTimelineEntry("Mapbox terrain and Three.js overlay initialized.", "ok");
+            addTimelineEntry("SAM umbrella anchored on coastal ridge at 24.6N, 121.1E.", "warn");
+          },
+          render(gl, matrix) {
+            const timeMs = performance.now();
+            const timeSeconds = timeMs * 0.001;
+            const deltaSeconds = state.lastTime ? Math.min((timeMs - state.lastTime) / 1000, 0.05) : 0.016;
+            state.lastTime = timeMs;
+            state.frame += 1;
+
+            updateDroneSimulation(deltaSeconds, timeSeconds);
+            if (state.frame % UPDATE_EVERY_N_FRAMES === 0) {
+              updateStaticWorldObjects(timeSeconds);
+              updateDroneInstances();
+              updateShipLabels();
+              updateUi();
+            }
+
+            const cameraMatrix = new THREE.Matrix4().fromArray(matrix);
+            const worldMatrix = new THREE.Matrix4()
+              .makeTranslation(state.originMercator.x, state.originMercator.y, state.originMercator.z)
+              .scale(new THREE.Vector3(state.unitsPerMeter, -state.unitsPerMeter, state.unitsPerMeter));
+
+            state.camera.projectionMatrix = cameraMatrix.multiply(worldMatrix);
+            state.renderer.resetState();
+            state.renderer.render(state.scene, state.camera);
+            state.map.triggerRepaint();
+          }
+        };
+
+        map.addLayer(customLayer);
+      });
+    }
+
+    function wireUi() {
+      ui.smartModeBtn.addEventListener("click", () => {
+        applyMission({ ...state.currentMission, mode: "smart" });
+      });
+
+      ui.dumbModeBtn.addEventListener("click", () => {
+        applyMission({ ...state.currentMission, mode: "dumb" });
+      });
+
+      ui.tacticalViewBtn.addEventListener("click", animateTacticalView);
+
+      ui.followSwarmBtn.addEventListener("click", () => {
+        state.followSwarm = !state.followSwarm;
+        ui.followSwarmBtn.classList.toggle("active", state.followSwarm);
+      });
+
+      ui.runMissionBtn.addEventListener("click", () => {
+        applyMission(parseMissionIntent(ui.missionInput.value));
+      });
+
+      ui.voiceMissionBtn.addEventListener("click", () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          ui.voiceStatus.textContent = "Voice capture is not supported in this browser. Use Chrome or Edge, or type the mission manually.";
+          return;
+        }
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        ui.voiceStatus.textContent = "Listening for mission intent...";
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          ui.voiceStatus.textContent = `Captured: "${transcript}"`;
+          applyMission(parseMissionIntent(transcript));
+        };
+        recognition.onerror = (event) => {
+          ui.voiceStatus.textContent = `Voice mission failed: ${event.error}`;
+        };
+        recognition.start();
+      });
+
+      ui.terrainExaggerationSelect.addEventListener("change", () => {
+        if (!state.map) return;
+        state.map.setTerrain({
+          source: "mapbox-dem",
+          exaggeration: Number(ui.terrainExaggerationSelect.value)
+        });
+      });
+
+      ui.sweepBearingBtn.addEventListener("click", () => {
+        state.sweepBearing = !state.sweepBearing;
+        ui.sweepBearingBtn.classList.toggle("active", state.sweepBearing);
+      });
+
+      ui.resetCameraBtn.addEventListener("click", () => {
+        state.sweepBearing = false;
+        ui.sweepBearingBtn.classList.remove("active");
+        state.currentBearingSweep = INITIAL_CAMERA.bearing;
+        if (state.map) {
+          state.map.easeTo({
+            center: INITIAL_CAMERA.center,
+            zoom: INITIAL_CAMERA.zoom,
+            pitch: INITIAL_CAMERA.pitch,
+            bearing: INITIAL_CAMERA.bearing,
+            duration: 1500,
+            essential: true
+          });
+        }
+      });
+
+      ui.formationSelect.addEventListener("change", () => {
+        applyMission({ ...state.currentMission, formation: ui.formationSelect.value });
+      });
+    }
+
+    wireUi();
+    applyMission(parseMissionIntent(state.currentMission.text));
+    initMap();
+  </script>
+</body>
+</html>

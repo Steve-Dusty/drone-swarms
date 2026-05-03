@@ -306,6 +306,11 @@ def simulation():
     return send_from_directory("static", "simulation.html")
 
 
+@app.route("/mapbox-simulation")
+def mapbox_simulation():
+    return send_from_directory("static", "mapbox-simulation.html")
+
+
 @app.route("/api/foundry/health")
 def foundry_health():
     settings = foundry_settings()
